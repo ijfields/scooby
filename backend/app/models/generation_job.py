@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.episode import Episode
 
 
 class GenerationJob(Base):
@@ -31,7 +37,7 @@ class GenerationJob(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    episode: Mapped["Episode"] = relationship(back_populates="generation_jobs")  # noqa: F821
+    episode: Mapped["Episode"] = relationship(back_populates="generation_jobs")
 
     __table_args__ = (
         Index("idx_gen_jobs_episode_id", "episode_id"),

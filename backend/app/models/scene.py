@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     ForeignKey,
@@ -13,6 +16,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.episode import Episode
+    from app.models.video_asset import VideoAsset
 
 
 class Scene(Base, TimestampMixin):
@@ -32,10 +39,10 @@ class Scene(Base, TimestampMixin):
     start_frame: Mapped[int | None] = mapped_column(Integer)
     end_frame: Mapped[int | None] = mapped_column(Integer)
 
-    episode: Mapped["Episode"] = relationship(back_populates="scenes")  # noqa: F821
+    episode: Mapped["Episode"] = relationship(back_populates="scenes")
     video_assets: Mapped[list["VideoAsset"]] = relationship(
         back_populates="scene", cascade="all, delete-orphan"
-    )  # noqa: F821
+    )
 
     __table_args__ = (
         UniqueConstraint("episode_id", "scene_order"),

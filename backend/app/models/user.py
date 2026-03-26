@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
+
+if TYPE_CHECKING:
+    from app.models.story import Story
 
 
 class User(Base, TimestampMixin):
@@ -18,7 +24,7 @@ class User(Base, TimestampMixin):
 
     stories: Mapped[list["Story"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
-    )  # noqa: F821
+    )
 
     __table_args__ = (
         Index("idx_users_clerk_id", "clerk_id"),

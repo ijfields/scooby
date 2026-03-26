@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = "scooby-assets-dev"
     S3_PUBLIC_URL: str = ""
 
+    # Clerk
+    CLERK_ISSUER_URL: str = ""
+
     # Remotion
     REMOTION_SIDECAR_PATH: str = "./remotion"
 

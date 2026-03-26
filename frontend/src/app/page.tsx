@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Nav } from "@/components/nav";
 
 function PenIcon({ className }: { className?: string }) {
   return (
@@ -114,15 +115,7 @@ const features = [
 export default function Home() {
   return (
     <div className="flex flex-col flex-1">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <span className="text-lg font-bold tracking-tight">scooby</span>
-          <Link href="/stories">
-            <Button size="sm">Sign In</Button>
-          </Link>
-        </div>
-      </header>
+      <Nav />
 
       <main className="flex-1">
         {/* Hero */}
