@@ -1,0 +1,22 @@
+{
+  "name": "scooby-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render",
+    "build": "remotion bundle"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.440",
+    "@remotion/player": "4.0.440",
+    "react": "^19",
+    "react-dom": "^19",
+    "remotion": "4.0.440"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}
