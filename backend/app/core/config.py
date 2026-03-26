@@ -45,9 +45,18 @@ class Settings(BaseSettings):
     MAX_STORY_LENGTH_CHARS: int = 5000
 
     @property
+    def DATABASE_URL_ASYNC(self) -> str:
+        """Async driver URL for SQLAlchemy async engine."""
+        url = self.DATABASE_URL
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
+    @property
     def DATABASE_URL_SYNC(self) -> str:
         """Sync driver URL for Alembic migrations."""
-        return self.DATABASE_URL.replace("+asyncpg", "")
+        url = self.DATABASE_URL
+        return url.replace("+asyncpg", "").replace("postgresql://", "postgresql://", 1)
 
     @property
     def allowed_origins_list(self) -> list[str]:

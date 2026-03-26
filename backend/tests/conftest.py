@@ -17,7 +17,7 @@ from app.models.user import User
 import app.models  # noqa: F401
 
 # Replace only the database name at the end of the URL
-_base = settings.DATABASE_URL.rsplit("/", 1)[0]
+_base = settings.DATABASE_URL_ASYNC.rsplit("/", 1)[0]
 TEST_DB_URL = f"{_base}/scooby_test"
 
 
