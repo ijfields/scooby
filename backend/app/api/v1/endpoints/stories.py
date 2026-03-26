@@ -61,14 +61,10 @@ async def get_story(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Story:
-    result = await db.execute(
-        select(Story).where(Story.id == story_id, Story.user_id == user.id)
-    )
+    result = await db.execute(select(Story).where(Story.id == story_id, Story.user_id == user.id))
     story = result.scalar_one_or_none()
     if story is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found")
     return story
 
 
@@ -79,14 +75,10 @@ async def update_story(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> Story:
-    result = await db.execute(
-        select(Story).where(Story.id == story_id, Story.user_id == user.id)
-    )
+    result = await db.execute(select(Story).where(Story.id == story_id, Story.user_id == user.id))
     story = result.scalar_one_or_none()
     if story is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found")
 
     if body.title is not None:
         story.title = body.title
@@ -105,13 +97,9 @@ async def delete_story(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    result = await db.execute(
-        select(Story).where(Story.id == story_id, Story.user_id == user.id)
-    )
+    result = await db.execute(select(Story).where(Story.id == story_id, Story.user_id == user.id))
     story = result.scalar_one_or_none()
     if story is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found")
     await db.delete(story)
     await db.commit()

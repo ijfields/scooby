@@ -29,15 +29,11 @@ async def start_generation(
 ) -> GenerationJob:
     """Trigger the full video generation pipeline for an episode."""
     result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     episode = result.scalar_one_or_none()
     if episode is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     if episode.status == "generating":
         raise HTTPException(
@@ -79,14 +75,10 @@ async def get_generation_status(
 ) -> GenerationJob | None:
     """Get the latest generation job status for an episode."""
     ep_result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     if ep_result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     result = await db.execute(
         select(GenerationJob)

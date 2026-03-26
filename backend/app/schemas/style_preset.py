@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class StylePresetResponse(BaseModel):
-    id: str
+    id: UUID
     name: str
     category: str
     description: str | None

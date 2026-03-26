@@ -24,9 +24,7 @@ class GenerationJob(Base):
     )
     job_type: Mapped[str] = mapped_column(String(30), nullable=False)
     celery_task_id: Mapped[str | None] = mapped_column(String(255))
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, server_default="pending"
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="pending")
     progress: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), server_default="0")
     stage: Mapped[str | None] = mapped_column(String(50))
     error_message: Mapped[str | None] = mapped_column(Text)

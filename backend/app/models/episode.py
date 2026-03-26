@@ -24,21 +24,11 @@ class Episode(Base, TimestampMixin):
         ForeignKey("stories.id", ondelete="CASCADE"), nullable=False
     )
     title: Mapped[str | None] = mapped_column(String(200))
-    target_duration_sec: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="90"
-    )
-    visual_style_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("style_presets.id")
-    )
-    voice_style_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("style_presets.id")
-    )
-    music_style_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("style_presets.id")
-    )
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, server_default="draft"
-    )
+    target_duration_sec: Mapped[int] = mapped_column(Integer, nullable=False, server_default="90")
+    visual_style_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("style_presets.id"))
+    voice_style_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("style_presets.id"))
+    music_style_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("style_presets.id"))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
     composition_json: Mapped[dict | None] = mapped_column(JSONB)
     final_video_url: Mapped[str | None] = mapped_column(Text)
     final_video_duration_sec: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))

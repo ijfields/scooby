@@ -15,15 +15,11 @@ from app.models.video_asset import VideoAsset
 
 def build_composition_json(session: Session, episode_id: str) -> dict:
     """Build the composition JSON spec for Remotion rendering."""
-    episode = session.execute(
-        select(Episode).where(Episode.id == episode_id)
-    ).scalar_one()
+    episode = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one()
 
     scenes = list(
         session.execute(
-            select(Scene)
-            .where(Scene.episode_id == episode_id)
-            .order_by(Scene.scene_order)
+            select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)
         )
         .scalars()
         .all()
@@ -106,9 +102,7 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
                 "url": music_preset.config["track_url"],
                 "volume": music_preset.config.get("volume", 0.15),
                 "fadeInFrames": int(music_preset.config.get("fade_in_seconds", 2) * fps),
-                "fadeOutFrames": int(
-                    music_preset.config.get("fade_out_seconds", 3) * fps
-                ),
+                "fadeOutFrames": int(music_preset.config.get("fade_out_seconds", 3) * fps),
             }
 
     composition = {

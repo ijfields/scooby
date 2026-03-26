@@ -23,9 +23,7 @@ class Story(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
     word_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, server_default="draft"
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
 
     user: Mapped["User"] = relationship(back_populates="stories")
     episodes: Mapped[list["Episode"]] = relationship(

@@ -10,7 +10,9 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-STABILITY_API_URL = "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"
+STABILITY_API_URL = (
+    "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"
+)
 
 
 def generate_image(

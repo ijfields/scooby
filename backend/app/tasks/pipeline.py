@@ -32,15 +32,11 @@ def generate_images_task(self, episode_id: str) -> dict:
 
     session = _get_sync_session()
     try:
-        episode = session.execute(
-            select(Episode).where(Episode.id == episode_id)
-        ).scalar_one()
+        episode = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one()
 
         scenes = list(
             session.execute(
-                select(Scene)
-                .where(Scene.episode_id == episode_id)
-                .order_by(Scene.scene_order)
+                select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)
             )
             .scalars()
             .all()
@@ -55,15 +51,11 @@ def generate_images_task(self, episode_id: str) -> dict:
             if preset:
                 style_config = preset.config
 
-        output_dir = os.path.join(
-            tempfile.gettempdir(), "scooby", str(episode_id), "images"
-        )
+        output_dir = os.path.join(tempfile.gettempdir(), "scooby", str(episode_id), "images")
         os.makedirs(output_dir, exist_ok=True)
 
         for i, scene in enumerate(scenes):
-            logger.info(
-                "Generating image %d/%d for episode %s", i + 1, len(scenes), episode_id
-            )
+            logger.info("Generating image %d/%d for episode %s", i + 1, len(scenes), episode_id)
             try:
                 image_bytes = generate_image(
                     prompt=scene.visual_description,
@@ -89,7 +81,9 @@ def generate_images_task(self, episode_id: str) -> dict:
                 session.add(asset)
 
                 # Set image prompt on scene
-                scene.image_prompt = f"{scene.visual_description}, {style_config.get('style_prompt_suffix', '')}"
+                scene.image_prompt = (
+                    f"{scene.visual_description}, {style_config.get('style_prompt_suffix', '')}"
+                )
 
             except Exception as e:
                 logger.error("Failed to generate image for scene %s: %s", scene.id, e)
@@ -102,9 +96,7 @@ def generate_images_task(self, episode_id: str) -> dict:
         session.close()
 
 
-@celery_app.task(
-    name="app.tasks.pipeline.generate_voiceovers", bind=True, max_retries=2
-)
+@celery_app.task(name="app.tasks.pipeline.generate_voiceovers", bind=True, max_retries=2)
 def generate_voiceovers_task(self, episode_id: str) -> dict:
     """Generate voiceovers for all scenes in an episode."""
     from app.models.episode import Episode
@@ -115,15 +107,11 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
 
     session = _get_sync_session()
     try:
-        episode = session.execute(
-            select(Episode).where(Episode.id == episode_id)
-        ).scalar_one()
+        episode = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one()
 
         scenes = list(
             session.execute(
-                select(Scene)
-                .where(Scene.episode_id == episode_id)
-                .order_by(Scene.scene_order)
+                select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)
             )
             .scalars()
             .all()
@@ -138,9 +126,7 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
             if preset:
                 voice_config = preset.config
 
-        output_dir = os.path.join(
-            tempfile.gettempdir(), "scooby", str(episode_id), "audio"
-        )
+        output_dir = os.path.join(tempfile.gettempdir(), "scooby", str(episode_id), "audio")
         os.makedirs(output_dir, exist_ok=True)
 
         for i, scene in enumerate(scenes):
@@ -179,9 +165,7 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
                 session.add(asset)
 
             except Exception as e:
-                logger.error(
-                    "Failed to generate voiceover for scene %s: %s", scene.id, e
-                )
+                logger.error("Failed to generate voiceover for scene %s: %s", scene.id, e)
                 raise
 
         session.commit()
@@ -202,9 +186,7 @@ def compose_and_render_task(self, episode_id: str) -> dict:
     try:
         composition = build_composition_json(session, episode_id)
 
-        episode = session.execute(
-            select(Episode).where(Episode.id == episode_id)
-        ).scalar_one()
+        episode = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one()
         episode.composition_json = composition
 
         output_dir = os.path.join(tempfile.gettempdir(), "scooby", str(episode_id))
@@ -234,9 +216,7 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
 
     session = _get_sync_session()
     try:
-        episode = session.execute(
-            select(Episode).where(Episode.id == episode_id)
-        ).scalar_one()
+        episode = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one()
         episode.status = "generating"
 
         job = GenerationJob(
@@ -292,9 +272,7 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
             job_result.error_message = str(e)
             job_result.completed_at = datetime.now(timezone.utc)
 
-        ep = session.execute(
-            select(Episode).where(Episode.id == episode_id)
-        ).scalar_one_or_none()
+        ep = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one_or_none()
         if ep:
             ep.status = "draft"
 

@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class EpisodeResponse(BaseModel):
-    id: str
-    story_id: str
+    id: UUID
+    story_id: UUID
     title: str | None
     target_duration_sec: int
     status: str
-    visual_style_id: str | None
-    voice_style_id: str | None
-    music_style_id: str | None
+    visual_style_id: UUID | None
+    voice_style_id: UUID | None
+    music_style_id: UUID | None
     final_video_url: str | None
     created_at: datetime
     updated_at: datetime
@@ -30,8 +31,8 @@ class EpisodeUpdate(BaseModel):
 
 
 class SceneResponse(BaseModel):
-    id: str
-    episode_id: str
+    id: UUID
+    episode_id: UUID
     scene_order: int
     beat_label: str
     visual_description: str
@@ -54,8 +55,8 @@ class SceneUpdate(BaseModel):
 
 
 class GenerationJobResponse(BaseModel):
-    id: str
-    episode_id: str
+    id: UUID
+    episode_id: UUID
     job_type: str
     status: str
     progress: float | None

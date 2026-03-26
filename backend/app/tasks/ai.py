@@ -53,9 +53,7 @@ def generate_scene_breakdown_task(self, episode_id: str, story_text: str) -> dic
         breakdown = generate_scene_breakdown(story_text)
 
         # Save scenes
-        episode = session.execute(
-            select(Episode).where(Episode.id == episode_id)
-        ).scalar_one()
+        episode = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one()
 
         episode.title = breakdown.title
         episode.target_duration_sec = int(breakdown.total_duration_sec)

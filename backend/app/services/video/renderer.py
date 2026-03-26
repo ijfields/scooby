@@ -24,9 +24,7 @@ def render_video(composition_data: dict, output_path: str) -> str:
 
     Returns path to the rendered MP4 file.
     """
-    props_file = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False
-    )
+    props_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
     json.dump(composition_data, props_file)
     props_file.close()
 

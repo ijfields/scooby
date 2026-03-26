@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -16,8 +17,8 @@ class StoryUpdate(BaseModel):
 
 
 class StoryResponse(BaseModel):
-    id: str
-    user_id: str
+    id: UUID
+    user_id: UUID
     title: str
     raw_text: str
     word_count: int

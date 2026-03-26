@@ -33,14 +33,10 @@ async def create_episode_from_story(
     db: AsyncSession = Depends(get_db),
 ) -> Episode:
     """Create an episode from a story and kick off scene breakdown."""
-    result = await db.execute(
-        select(Story).where(Story.id == story_id, Story.user_id == user.id)
-    )
+    result = await db.execute(select(Story).where(Story.id == story_id, Story.user_id == user.id))
     story = result.scalar_one_or_none()
     if story is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Story not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found")
 
     episode = Episode(story_id=story.id, title=story.title)
     db.add(episode)
@@ -74,15 +70,11 @@ async def get_episode(
     db: AsyncSession = Depends(get_db),
 ) -> Episode:
     result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     episode = result.scalar_one_or_none()
     if episode is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
     return episode
 
 
@@ -94,15 +86,11 @@ async def update_episode(
     db: AsyncSession = Depends(get_db),
 ) -> Episode:
     result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     episode = result.scalar_one_or_none()
     if episode is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(episode, field, value)
@@ -120,14 +108,10 @@ async def list_scenes(
 ) -> list[Scene]:
     # Verify ownership
     ep_result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     if ep_result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     result = await db.execute(
         select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)
@@ -145,23 +129,17 @@ async def update_scene(
 ) -> Scene:
     # Verify ownership
     ep_result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     if ep_result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     result = await db.execute(
         select(Scene).where(Scene.id == scene_id, Scene.episode_id == episode_id)
     )
     scene = result.scalar_one_or_none()
     if scene is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Scene not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scene not found")
 
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(scene, field, value)
@@ -171,9 +149,7 @@ async def update_scene(
     return scene
 
 
-@router.delete(
-    "/{episode_id}/scenes/{scene_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{episode_id}/scenes/{scene_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_scene(
     episode_id: str,
     scene_id: str,
@@ -181,23 +157,17 @@ async def delete_scene(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     ep_result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     if ep_result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     result = await db.execute(
         select(Scene).where(Scene.id == scene_id, Scene.episode_id == episode_id)
     )
     scene = result.scalar_one_or_none()
     if scene is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Scene not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scene not found")
     await db.delete(scene)
     await db.commit()
 
@@ -209,14 +179,10 @@ async def list_jobs(
     db: AsyncSession = Depends(get_db),
 ) -> list[GenerationJob]:
     ep_result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     if ep_result.scalar_one_or_none() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     result = await db.execute(
         select(GenerationJob)

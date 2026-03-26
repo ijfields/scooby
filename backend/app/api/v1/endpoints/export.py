@@ -27,15 +27,11 @@ async def download_video(
 ) -> dict:
     """Get download info for the final rendered video."""
     result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     episode = result.scalar_one_or_none()
     if episode is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     if not episode.final_video_url:
         raise HTTPException(
@@ -61,15 +57,11 @@ async def download_script(
 ) -> StreamingResponse:
     """Generate and download the episode script as a text document."""
     result = await db.execute(
-        select(Episode)
-        .join(Story)
-        .where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
     )
     episode = result.scalar_one_or_none()
     if episode is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
     scenes_result = await db.execute(
         select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)
@@ -109,7 +101,5 @@ async def download_script(
     return StreamingResponse(
         io.BytesIO(content.encode("utf-8")),
         media_type="text/plain",
-        headers={
-            "Content-Disposition": f'attachment; filename="{title_slug}-script.txt"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="{title_slug}-script.txt"'},
     )

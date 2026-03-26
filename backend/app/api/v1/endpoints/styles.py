@@ -13,9 +13,7 @@ router = APIRouter()
 
 @router.get("/", response_model=list[StylePresetResponse])
 async def list_style_presets(
-    category: str | None = Query(
-        None, description="Filter by category: visual, voice, music"
-    ),
+    category: str | None = Query(None, description="Filter by category: visual, voice, music"),
     db: AsyncSession = Depends(get_db),
 ) -> list[StylePreset]:
     query = select(StylePreset).where(StylePreset.is_active.is_(True))
