@@ -6,6 +6,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.2.0] — 2026-03-26
+
+### [ADDED]
+- Landing page with hero, how-it-works strip, feature cards, demo placeholder, footer
+- SEO meta tags (Open Graph, Twitter cards)
+- Responsive mobile-first layout
+- Sticky navigation with backdrop blur
+- Session summary: `docs/sessions/session-002-landing-page.md`
+
+---
+
 ## [0.1.1] — 2026-03-26
 
 ### [ADDED]
