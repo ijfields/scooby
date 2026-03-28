@@ -2,10 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY backend/requirements.txt backend/requirements-dev.txt ./
+COPY requirements.txt requirements-dev.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend/ .
+COPY . .
 
 EXPOSE 8000
 
