@@ -17,9 +17,10 @@ celery_app.conf.update(
     enable_utc=True,
     task_routes={
         "app.tasks.ai.*": {"queue": "ai_pipeline"},
-        "app.tasks.image.*": {"queue": "image_gen"},
-        "app.tasks.tts.*": {"queue": "tts_gen"},
-        "app.tasks.video.*": {"queue": "video_render"},
+        "app.tasks.pipeline.generate_images": {"queue": "image_gen"},
+        "app.tasks.pipeline.generate_voiceovers": {"queue": "tts_gen"},
+        "app.tasks.pipeline.compose_and_render": {"queue": "video_render"},
+        "app.tasks.pipeline.run_full_pipeline": {"queue": "ai_pipeline"},
         "app.tasks.cleanup.*": {"queue": "cleanup"},
     },
 )
