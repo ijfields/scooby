@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 
-CMD ["celery", "-A", "app.core.celery_app", "worker", "--loglevel=info", "-Q", "ai_pipeline,image_gen,tts_gen,video_render,cleanup", "--concurrency=2"]
+CMD ["celery", "-A", "app.core.celery_app", "worker", "--loglevel=info", "-Q", "celery,ai_pipeline,image_gen,tts_gen,video_render,cleanup", "--concurrency=2"]
