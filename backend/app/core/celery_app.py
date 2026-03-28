@@ -6,6 +6,7 @@ celery_app = Celery(
     "scooby",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
+    include=["app.tasks.ai", "app.tasks.pipeline"],
 )
 
 celery_app.conf.update(
