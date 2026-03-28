@@ -21,6 +21,11 @@ app.add_middleware(
 app.include_router(v1_router)
 
 
+@app.get("/")
+async def root() -> dict[str, str]:
+    return {"service": "Scooby API", "status": "running", "docs": "/docs"}
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
