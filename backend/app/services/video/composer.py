@@ -33,13 +33,13 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
         duration_sec = float(scene.duration_sec or 10)
         duration_frames = int(duration_sec * fps)
 
-        # Get assets for this scene
+        # Get latest assets for this scene
         image_asset = session.execute(
             select(VideoAsset).where(
                 VideoAsset.scene_id == scene.id,
                 VideoAsset.asset_type == "image",
                 VideoAsset.is_active.is_(True),
-            )
+            ).order_by(VideoAsset.created_at.desc()).limit(1)
         ).scalar_one_or_none()
 
         vo_asset = session.execute(
@@ -47,7 +47,7 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
                 VideoAsset.scene_id == scene.id,
                 VideoAsset.asset_type == "voiceover",
                 VideoAsset.is_active.is_(True),
-            )
+            ).order_by(VideoAsset.created_at.desc()).limit(1)
         ).scalar_one_or_none()
 
         scene_spec: dict = {
