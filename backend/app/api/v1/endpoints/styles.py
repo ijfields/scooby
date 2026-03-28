@@ -11,7 +11,7 @@ from app.schemas.style_preset import StylePresetResponse
 router = APIRouter()
 
 
-@router.get("/", response_model=list[StylePresetResponse])
+@router.get("", response_model=list[StylePresetResponse])
 async def list_style_presets(
     category: str | None = Query(None, description="Filter by category: visual, voice, music"),
     db: AsyncSession = Depends(get_db),

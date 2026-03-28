@@ -13,7 +13,7 @@ from app.schemas.story import StoryCreate, StoryListResponse, StoryResponse, Sto
 router = APIRouter()
 
 
-@router.post("/", response_model=StoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=StoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_story(
     body: StoryCreate,
     user: User = Depends(get_current_user),
@@ -32,7 +32,7 @@ async def create_story(
     return story
 
 
-@router.get("/", response_model=StoryListResponse)
+@router.get("", response_model=StoryListResponse)
 async def list_stories(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
