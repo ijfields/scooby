@@ -11,12 +11,13 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.models.base import Base, generate_uuid
 
@@ -32,7 +33,8 @@ class VideoAsset(Base):
         ForeignKey("scenes.id", ondelete="CASCADE"), nullable=False
     )
     asset_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    file_url: Mapped[str] = mapped_column(Text, nullable=False)
+    file_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_data: Mapped[bytes | None] = deferred(mapped_column(LargeBinary, nullable=True))
     file_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
     mime_type: Mapped[str | None] = mapped_column(String(100))
     metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB)

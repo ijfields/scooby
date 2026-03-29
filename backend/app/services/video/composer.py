@@ -56,7 +56,7 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
             "startFrame": current_frame,
             "durationFrames": duration_frames,
             "image": {
-                "url": image_asset.file_url if image_asset else "",
+                "url": f"/api/v1/assets/{image_asset.id}/file" if image_asset else "",
                 "animation": {
                     "type": "ken_burns",
                     "startScale": 1.0,
@@ -73,7 +73,7 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
 
         if vo_asset:
             scene_spec["voiceover"] = {
-                "url": vo_asset.file_url,
+                "url": f"/api/v1/assets/{vo_asset.id}/file",
                 "startOffsetFrames": 15,
                 "volume": 1.0,
             }

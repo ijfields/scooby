@@ -51,9 +51,6 @@ def generate_images_task(self, episode_id: str) -> dict:
             if preset:
                 style_config = preset.config
 
-        output_dir = os.path.join(tempfile.gettempdir(), "scooby", str(episode_id), "images")
-        os.makedirs(output_dir, exist_ok=True)
-
         for i, scene in enumerate(scenes):
             logger.info("Generating image %d/%d for episode %s", i + 1, len(scenes), episode_id)
             try:
@@ -64,16 +61,11 @@ def generate_images_task(self, episode_id: str) -> dict:
                     cfg_scale=style_config.get("cfg_scale", 7),
                 )
 
-                filename = f"scene_{scene.scene_order}.png"
-                filepath = os.path.join(output_dir, filename)
-                with open(filepath, "wb") as f:
-                    f.write(image_bytes)
-
-                # Create video asset record
+                # Store image bytes directly in database
                 asset = VideoAsset(
                     scene_id=scene.id,
                     asset_type="image",
-                    file_url=filepath,
+                    file_data=image_bytes,
                     file_size_bytes=len(image_bytes),
                     mime_type="image/png",
                     metadata_={"provider": "stability-ai"},
@@ -126,9 +118,6 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
             if preset:
                 voice_config = preset.config
 
-        output_dir = os.path.join(tempfile.gettempdir(), "scooby", str(episode_id), "audio")
-        os.makedirs(output_dir, exist_ok=True)
-
         for i, scene in enumerate(scenes):
             text = scene.narration_text or scene.dialogue_text
             if not text:
@@ -149,15 +138,11 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
                     style=voice_config.get("style", 0.3),
                 )
 
-                filename = f"scene_{scene.scene_order}.mp3"
-                filepath = os.path.join(output_dir, filename)
-                with open(filepath, "wb") as f:
-                    f.write(audio_bytes)
-
+                # Store audio bytes directly in database
                 asset = VideoAsset(
                     scene_id=scene.id,
                     asset_type="voiceover",
-                    file_url=filepath,
+                    file_data=audio_bytes,
                     file_size_bytes=len(audio_bytes),
                     mime_type="audio/mpeg",
                     metadata_={"provider": "elevenlabs"},
