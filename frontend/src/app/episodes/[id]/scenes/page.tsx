@@ -163,12 +163,21 @@ export default function SceneEditorPage() {
             {scenes.length} scenes &middot; {Math.round(totalDuration)}s total
           </p>
         </div>
-        <Button
-          onClick={() => router.push(`/episodes/${episodeId}/style`)}
-          disabled={scenes.length === 0}
-        >
-          Choose Style & Generate
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/episodes/${episodeId}/preview`)}
+            disabled={scenes.length === 0}
+          >
+            Preview
+          </Button>
+          <Button
+            onClick={() => router.push(`/episodes/${episodeId}/style`)}
+            disabled={scenes.length === 0}
+          >
+            Choose Style & Generate
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 space-y-4">

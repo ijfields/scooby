@@ -56,9 +56,17 @@ export default function StoriesPage() {
 
       {stories.length === 0 ? (
         <div className="mt-16 flex flex-col items-center gap-4 text-center">
-          <p className="text-lg text-muted-foreground">
-            You haven&apos;t written any stories yet.
-          </p>
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8">
+              <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-lg font-medium">No stories yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Write your first story and watch it come to life with AI.
+            </p>
+          </div>
           <Link href="/stories/new">
             <Button size="lg">Start Your First Story</Button>
           </Link>

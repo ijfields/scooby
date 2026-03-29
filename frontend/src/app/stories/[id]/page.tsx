@@ -86,13 +86,26 @@ export default function StoryDetailPage() {
         </p>
       </div>
 
-      <div className="mt-8 flex gap-3">
-        <Button onClick={handleBreakdown} disabled={breaking}>
-          {breaking ? "Breaking down..." : "Break Down My Story"}
-        </Button>
-        <Button variant="outline" onClick={() => router.push("/stories")}>
-          Back to Stories
-        </Button>
+      <div className="mt-8 rounded-xl border bg-card p-6">
+        <h2 className="font-semibold">Ready to bring this to life?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          AI will break your story into cinematic scenes with hooks, escalations, and a climax.
+        </p>
+        <div className="mt-4 flex gap-3">
+          <Button onClick={handleBreakdown} disabled={breaking}>
+            {breaking ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                Analyzing...
+              </span>
+            ) : (
+              "Break Down My Story"
+            )}
+          </Button>
+          <Button variant="outline" onClick={() => router.push("/stories")}>
+            Back to Stories
+          </Button>
+        </div>
       </div>
     </div>
   );

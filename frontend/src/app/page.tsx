@@ -209,20 +209,42 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Demo Placeholder */}
+        {/* Preview Experience */}
         <section className="border-t bg-muted/30 py-20 sm:py-24">
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               See it in action
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Watch a story transform into a vertical drama in under two minutes.
+              Each scene gets an AI-generated image and narrated voiceover.
+              <br />
+              Preview your story as an immersive slideshow before exporting.
             </p>
-            <div className="mx-auto mt-10 flex aspect-[9/16] max-w-xs items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/50">
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <PlayIcon className="h-12 w-12" />
-                <span className="text-sm font-medium">Demo video coming soon</span>
+            <div className="mx-auto mt-10 flex max-w-xs flex-col items-center gap-6">
+              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border-2 border-border bg-gradient-to-b from-indigo-950 to-gray-950 shadow-xl">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
+                  <div className="rounded-full bg-violet-500/20 p-4">
+                    <PlayIcon className="h-10 w-10 text-violet-400" />
+                  </div>
+                  <div className="space-y-2 text-center">
+                    <p className="text-sm font-medium text-white/90">Scene-by-scene preview</p>
+                    <p className="text-xs text-white/50">AI images + narrated audio + auto-advance</p>
+                  </div>
+                </div>
+                {/* Fake scene dots */}
+                <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5">
+                  <div className="h-1.5 w-5 rounded-full bg-violet-400" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                  <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                </div>
               </div>
+              <Link href="/stories/new">
+                <Button size="lg" className="h-12 px-8 text-base">
+                  Try It Now
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

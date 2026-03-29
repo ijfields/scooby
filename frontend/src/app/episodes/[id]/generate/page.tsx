@@ -147,7 +147,6 @@ export default function GeneratePage() {
           <div className="space-y-3">
             {["Generating images", "Generating voiceovers", "Rendering video"].map(
               (s) => {
-                const stageProgress = job?.progress ?? 0;
                 const stageOrder = ["Generating images", "Generating voiceovers", "Rendering video"];
                 const currentIdx = stageOrder.indexOf(stage);
                 const thisIdx = stageOrder.indexOf(s);
@@ -189,17 +188,20 @@ export default function GeneratePage() {
           {isComplete && (
             <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center dark:border-green-900 dark:bg-green-950">
               <p className="text-lg font-semibold text-green-700 dark:text-green-300">
-                Your video is ready!
+                Your scenes are ready!
+              </p>
+              <p className="mt-1 text-sm text-green-600 dark:text-green-400">
+                Images and narration have been generated for each scene.
               </p>
               <div className="mt-4 flex justify-center gap-3">
                 <Button onClick={() => router.push(`/episodes/${episodeId}/preview`)}>
-                  Preview Video
+                  Preview Story
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/episodes/${episodeId}/scenes`)}
                 >
-                  Back to Scenes
+                  Edit Scenes
                 </Button>
               </div>
             </div>
