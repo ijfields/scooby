@@ -6,6 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.4.0] — 2026-03-29
+
+### [ADDED]
+- Interactive scene-by-scene preview page with AI images, voiceover playback, auto-advance, transport controls, and scene sidebar with thumbnails
+- `GET /episodes/{id}/scenes-with-assets` — JSON endpoint returning scenes with their generated asset URLs
+- `GET /episodes/by-story/{story_id}` — list all episodes for a given story
+- Story detail page now shows existing episodes with links to preview, scenes, and generation progress
+- Preview button in scene editor header
+
+### [CHANGED]
+- Generate page completion message updated ("Your scenes are ready" instead of "Preview Video")
+- Landing page demo section replaced with preview experience mockup
+- Story detail CTA section redesigned with breakdown explanation
+- Stories list empty state improved with icon and descriptive text
+- Project plan updated to v0.4 with current sprint (lexicon, branding, shareable previews)
+
+### [FIXED]
+- Unused `stageProgress` variable in generate page
+
+---
+
 ## [0.3.0] — 2026-03-28
 
 ### [ADDED]

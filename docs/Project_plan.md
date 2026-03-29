@@ -1,202 +1,163 @@
 # Scooby — Phased Project Plan
 
-> **Version:** 0.1 (MVP)
-> **Last updated:** 2026-03-25
-> **Focus:** Phase 1 — Combined Landing Page + Core Wizard Flow
+> **Version:** 0.4
+> **Last updated:** 2026-03-29
+> **Focus:** Phase 1 completion — Lexicon, Branding, Shareable Previews
 
 ---
 
-## Phase 1: Landing Page + Core Flow (MVP)
+## Phase 1 Progress Tracker
 
-The first deliverable is a combined landing page and application entry point. The hero section presents the value proposition, a "Start your story" CTA takes the user into the wizard flow, and the full story-to-video pipeline works end to end.
+| Workstream | Status | Notes |
+|-----------|--------|-------|
+| 1.1 Environment & Repo Setup | **Done** | Monorepo, Docker Compose, Railway deployment |
+| 1.2 Landing Page | **Done** | Hero, how-it-works, features, CTA, updated demo section |
+| 1.3 Authentication (Clerk) | **Done** | Dev keys — need production keys for launch |
+| 1.4 Story Intake UI + API | **Done** | Create, list, view stories |
+| 1.5 AI Scene Breakdown | **Done** | Claude integration, Celery task, polling UI |
+| 1.6 Scene Editor UI | **Done** | Beat labels, inline edit, reorder, delete, preview link |
+| 1.7 Style & Voice Selection | **Done** | Visual/voice/music presets, duration toggle |
+| 1.8 Video Generation Pipeline | **Done** | Images (Stability AI) + voiceovers (ElevenLabs), Celery orchestration |
+| 1.9 Preview & Export | **Partial** | Scene-by-scene slideshow preview working; Remotion video render not started |
+| 1.10 Testing & Polish | **Not started** | E2E tests, error states, accessibility, mobile |
 
----
+### Recent Additions (Session 004)
 
-### 1.1 Environment & Repository Setup
-
-| # | Task | Details |
-|---|------|---------|
-| 1 | Initialize monorepo | Create repo structure: `frontend/`, `backend/`, `remotion/`, `docs/`, `scripts/` |
-| 2 | Frontend scaffolding | `npx create-next-app@latest` with App Router, TypeScript, Tailwind CSS, ESLint |
-| 3 | Backend scaffolding | Python project with FastAPI, `pyproject.toml`, virtual env, Alembic for migrations |
-| 4 | Remotion sidecar | `npx create-video@latest` in `remotion/` directory |
-| 5 | Database setup | PostgreSQL local dev + Docker Compose config, initial migration with all tables from Schemas.md |
-| 6 | Redis setup | Redis via Docker Compose for Celery broker |
-| 7 | Environment config | `.env.example` with all required variables (API keys, DB URL, Redis, S3) |
-| 8 | CI basics | GitHub Actions: lint + type-check on PR |
-
-**Definition of done:** `npm run dev` serves frontend, `uvicorn` serves backend, DB migrations run, Redis connects.
-
----
-
-### 1.2 Landing Page Build
-
-| # | Task | Details |
-|---|------|---------|
-| 1 | Hero section | Headline: "Your stories deserve to be seen." Subheadline explaining the concept. Large "Start Your Story" CTA button. Background: subtle video or gradient animation. |
-| 2 | How It Works section | 3-step visual strip: **Write** (story icon) → **Edit** (cards icon) → **Share** (play icon). Short description under each step. |
-| 3 | Features section | 4 feature cards with icons: AI Scene Breakdown, Visual Style Presets, One-Click Video, Instant Export. Brief description per card. |
-| 4 | Demo / Social Proof | Embedded demo video or animated GIF showing the wizard flow. Placeholder for testimonials. |
-| 5 | Footer | Navigation links, copyright, "Built for writers" tagline. |
-| 6 | Responsive design | Mobile-first (the landing page itself should look great on phones). |
-| 7 | SEO & meta | Page title, description, Open Graph tags, favicon. |
-
-**Definition of done:** Landing page renders at `/`, all sections visible, responsive on mobile/tablet/desktop, CTA scrolls or navigates to wizard.
+- Interactive scene-by-scene preview (slideshow with AI images, voiceover playback, auto-advance)
+- `GET /episodes/{id}/scenes-with-assets` and `GET /episodes/by-story/{story_id}` endpoints
+- Story detail page shows existing episodes (no more dead-end workflow)
+- UI polish across all pages
 
 ---
 
-### 1.3 Authentication (Clerk)
+## Current Sprint: Lexicon + Branding + Shareable Previews
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | Clerk project setup | Create Clerk application, configure sign-in methods (email + Google) |
-| 2 | Frontend integration | `@clerk/nextjs` provider, sign-in/sign-up components, protected routes |
-| 3 | Backend JWT verification | FastAPI middleware to verify Clerk JWT from Authorization header |
-| 4 | User sync endpoint | `POST /api/v1/auth/sync` — on first login, create local user record from Clerk data |
-| 5 | Auth guard | Wizard pages require authentication; landing page is public |
+### Priority 1: Lock the Content Lexicon
 
-**Definition of done:** User can sign up, sign in, and access wizard. Backend verifies JWT. User record synced to PostgreSQL.
+**Problem:** The codebase and UI use "episode" for everything — a single standalone generation and a member of a series. This is confusing for non-technical writers and will compound as we add series support.
 
----
+**Proposed hierarchy:**
 
-### 1.4 Story Intake UI + API
+| Term | Definition | Contains | In Code (current) |
+|------|-----------|----------|--------------------|
+| **Story** | Raw text input from the writer | — | `stories` table (keep) |
+| **Video** | One generated output — the thing you preview/export | Scenes | `episodes` table (rename) |
+| **Scene** | A single beat within a video (image + narration) | Assets | `scenes` table (keep) |
+| **Series** | A collection of related videos (optional, Phase 2) | Videos | Does not exist yet |
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | Story input page | Full-width textarea with character count. Inline guidance text. Title input field. |
-| 2 | Validation | Client-side: min 100 chars, max 5000 chars, title required. Server-side: same checks. |
-| 3 | API endpoint | `POST /api/v1/stories` — creates story record, returns story ID |
-| 4 | Stories list | `GET /api/v1/stories` — paginated list for user dashboard (simple card layout) |
-| 5 | "Break down my story" CTA | Button that triggers scene generation, navigates to scene editor |
+**Decision needed:** Confirm naming with cofounder before renaming. The rename touches:
+- Database table + model (`episodes` -> `videos`)
+- All API routes (`/episodes/` -> `/videos/`)
+- All frontend pages and routes
+- UI copy throughout
 
-**Definition of done:** User types/pastes a story, clicks submit, story is saved to DB, user proceeds to scene breakdown.
+**Recommendation:** Do a single coordinated rename with an Alembic migration. Don't half-rename — that's worse than the current state.
 
----
+### Priority 2: Branding & Visual Theme
 
-### 1.5 AI Scene Breakdown Integration
+**Goal:** Make the demo feel like a product, not a prototype, before gathering wider feedback.
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | Claude API integration | `anthropic` Python SDK, structured prompt for story → beats breakdown |
-| 2 | Prompt engineering | System prompt instructing 5-7 beat structure (hook, setup, escalation 1-3, climax, button). Output as structured JSON. |
-| 3 | Celery task | `generate_scene_breakdown` task — calls Claude, parses response, creates scene records |
-| 4 | API endpoint | `POST /api/v1/episodes/:id/generate-breakdown` — triggers Celery task, returns job ID |
-| 5 | Progress feedback | Polling or WebSocket — "Analyzing your story..." loading state in UI |
-| 6 | Error handling | Retry on transient failures, user-friendly error if breakdown fails |
+| Item | Scope | Status |
+|------|-------|--------|
+| Color palette | Pick 1 primary + 1 accent color, update CSS variables | Not started |
+| Typography | Choose a heading font, keep system sans for body | Not started |
+| Logo | Even a text wordmark with the right font makes a difference | Not started |
+| Dark mode | Currently has CSS variables but not tested/polished | Not started |
+| Empty states | Add illustrations or branded graphics | Partially done |
+| Loading states | Consistent spinner/skeleton pattern | Partially done |
 
-**Definition of done:** User clicks "Break down", Claude generates 5-7 beat cards, scenes appear in the editor within 10-30 seconds.
+### Priority 3: Shareable Preview Links
 
----
+**Goal:** Let the cofounder (and future test users) view a preview without logging in.
 
-### 1.6 Scene Editor UI
+| Task | Details |
+|------|---------|
+| Share token generation | `POST /videos/{id}/share` → returns a short-lived or permanent token |
+| Public preview route | `/share/{token}` — renders the slideshow preview, no auth required |
+| Copy link button | On the preview page, one-click copy shareable URL |
+| Optional: expiry | Tokens expire after N days or are revokable |
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | Card layout | Vertical stack of scene cards, each showing: beat label, visual description, narration text |
-| 2 | Inline editing | Click-to-edit on visual description and narration text fields |
-| 3 | Tone buttons | Per-card: "More Dramatic", "Simpler Language", "Shorter" — call Claude to rewrite that beat |
-| 4 | Card actions | Delete scene, merge with next scene |
-| 5 | Add scene | "Add a scene" button inserts blank card at chosen position |
-| 6 | Drag-and-drop reorder | React DnD for reordering cards |
-| 7 | Auto-save | Debounced PATCH calls to save edits |
-| 8 | Proceed button | "Choose style & generate" → navigates to style selection |
-
-**Definition of done:** User sees beat cards, can edit/delete/reorder/add scenes, changes persist to DB.
+This is simpler and more useful than team/multi-user features right now.
 
 ---
 
-### 1.7 Style & Voice Selection
+## Phase 1 Remaining Work (after current sprint)
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | Style presets API | `GET /api/v1/style-presets` — returns visual, voice, and music presets |
-| 2 | Seed data | Insert 4 visual styles, 3 voice presets, 4 music moods into DB |
-| 3 | Selection UI | Grid of style cards with thumbnails/previews. Radio selection per category. |
-| 4 | Duration toggle | 60s or 90s toggle |
-| 5 | Audio preview | Play voice sample and music sample inline |
-| 6 | Save selections | `PATCH /api/v1/episodes/:id` — save style/voice/music/duration choices |
+### 1.9 Preview & Export (remaining)
 
-**Definition of done:** User selects visual style, voice, music mood, and duration. Choices saved to episode record.
-
----
-
-### 1.8 Video Generation Pipeline
-
-| # | Task | Details |
-|---|------|---------|
-| 1 | Image generation task | Celery task calling Stability AI for each scene (parallel group). 1080×1920 vertical images. |
-| 2 | Voiceover generation task | Celery task calling ElevenLabs for each scene's narration (parallel group). |
-| 3 | Remotion composition builder | Generate `composition.json` from scenes + assets. Map scenes to Remotion sequences with timing. |
-| 4 | Remotion render task | Celery task that shells out to `npx remotion render` with the composition config. |
-| 5 | Pipeline orchestration | Celery chain: images (group) → voiceovers (group) → compose → render → finalize |
-| 6 | Progress tracking | Redis pub/sub → WebSocket. Report stage and percentage to frontend. |
-| 7 | Asset upload | Upload generated images, audio, and final video to S3. |
-| 8 | Error handling | Per-scene retry (max 3), overall pipeline failure handling with user notification. |
-
-**Definition of done:** Clicking "Generate" kicks off the full pipeline. User sees real-time progress. Final MP4 is produced and stored.
-
----
-
-### 1.9 Preview & Export
-
-| # | Task | Details |
-|---|------|---------|
-| 1 | Video player | In-browser 9:16 video player with play/pause/scrub. Styled to show vertical format. |
-| 2 | Per-scene regeneration | "Regenerate visuals" and "Regenerate VO" buttons per scene in preview mode |
-| 3 | Final render | "Render Final" button triggers final high-quality render |
-| 4 | Download MP4 | Direct download link from S3 |
-| 5 | Script PDF export | Generate and download beat-by-beat script as PDF |
-| 6 | Share link | (Stretch) Generate a public shareable link for the video |
-
-**Definition of done:** User previews their episode, can regenerate individual scenes, and downloads the final MP4.
-
----
+| # | Task | Details | Priority |
+|---|------|---------|----------|
+| 1 | Per-scene regeneration | "Regenerate image" and "Regenerate voiceover" buttons per scene | High |
+| 2 | Remotion integration | Node.js sidecar, video composition, MP4 render | Medium — slideshow covers 80% |
+| 3 | MP4 download | Direct download of rendered video | Blocked on Remotion |
+| 4 | Script PDF export | Generate and download beat-by-beat script | Low |
 
 ### 1.10 Testing & Polish
 
-| # | Task | Details |
-|---|------|---------|
-| 1 | E2E happy path test | Playwright test: story input → scene breakdown → edit → style select → generate → download |
-| 2 | API tests | pytest for all backend endpoints |
-| 3 | Error states | Graceful handling of API failures, empty states, loading states |
-| 4 | Performance | Optimize image loading, lazy load heavy components |
-| 5 | Accessibility | Keyboard navigation, ARIA labels, color contrast |
-| 6 | Mobile testing | Test wizard flow on mobile devices |
-| 7 | Copy & UX review | Review all user-facing text, button labels, guidance messages |
-
-**Definition of done:** All tests pass. No critical bugs. A non-technical user can complete the full flow unassisted.
+| # | Task | Details | Priority |
+|---|------|---------|----------|
+| 1 | Error states | Graceful handling of API failures, timeouts, empty states | High |
+| 2 | Mobile testing | Test full wizard flow on phone screens | High |
+| 3 | Accessibility | Keyboard nav, ARIA labels, color contrast | Medium |
+| 4 | E2E tests | Playwright: story → breakdown → style → generate → preview | Medium |
+| 5 | API tests | pytest for all backend endpoints | Medium |
+| 6 | Performance | Image lazy loading, skeleton states | Low |
 
 ---
 
-## Phase 2: Collaborative Writers' Room (Future)
+## Phase 1.5: Veo Movie Mode (unchanged)
 
-| Feature | Description |
-|---------|-------------|
-| Projects & series | Group episodes into series/seasons with shared character bibles |
-| Shared workspace | Invite co-writers and editors with role-based access |
-| Style presets library | User-created and shared style configurations |
-| "In the style of" editing | AI-assisted tone/style transformation of scenes |
-| Comments & annotations | Per-scene commenting and suggestion threads |
-| Version history | Track changes across edits with rollback |
+See [Enhancements.md](./Enhancements.md) for full spec. Prerequisite: Phase 1 complete with Remotion integration.
 
 ---
 
-## Phase 3: Distribution & Analytics (Future)
+## Phase 2: Collaborative Writers' Room
 
-| Feature | Description |
-|---------|-------------|
-| Platform publishing | Direct publish to TikTok, YouTube Shorts, Instagram Reels |
-| Story analytics | Episode-level metrics: completion rate, drop-off, engagement |
-| Marketing tools | Auto-generate thumbnails, titles, hashtags, descriptions |
-| Monetization | Premium drops, licensing tools, crowdfunding integration |
-| Multi-format output | Same story → vertical drama, audio drama, book format, pitch deck |
+> **Updated 2026-03-29** — Team features deferred to Phase 2. Shareable preview links (Phase 1) cover the immediate need.
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Series support | Group videos into series with ordering | High — once lexicon is locked |
+| Shared workspace | Invite collaborators by email, role-based access | Medium |
+| Comments & annotations | Per-scene comment threads | Medium |
+| Version history | Scene edit history with diff view and rollback | Low |
+| Custom style presets | Users create and save their own styles | Low |
+
+See [Enhancements.md](./Enhancements.md) for full Phase 2 spec.
 
 ---
 
-## Timeline Estimate
+## Phase 3: Distribution & Analytics (unchanged)
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| **Phase 1** | Landing page + full wizard flow + pipeline | **Current** |
-| **Phase 2** | Collaboration, projects, advanced editing | Planned |
-| **Phase 3** | Distribution, analytics, monetization | Future |
+See [Enhancements.md](./Enhancements.md).
+
+---
+
+## Timeline & Milestones
+
+| Milestone | Target | Status |
+|-----------|--------|--------|
+| Story → AI scenes → edit → style → generate pipeline | 2026-03-28 | **Done** |
+| Scene-by-scene preview with images + audio | 2026-03-29 | **Done** |
+| Episode navigation (revisit generated content) | 2026-03-29 | **Done** |
+| Lexicon locked + rename | Next session | Pending |
+| Branding pass (palette, typography, logo) | Next session | Pending |
+| Shareable preview links | After branding | Pending |
+| Cofounder feedback incorporated | Ongoing | Pending |
+| Remotion video export | After feedback | Pending |
+| Production Clerk keys | Before public launch | Pending |
+| Public beta | TBD | Pending |
+
+---
+
+## Decision Log
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-03-25 | Monorepo structure (frontend/backend/remotion) | Simpler CI, shared types later |
+| 2026-03-26 | Combined landing page + app (not separate sites) | MVP speed, single deploy |
+| 2026-03-28 | Store assets as LargeBinary in Postgres (not S3) | Simpler for MVP, migrate to S3 later |
+| 2026-03-28 | Railway for all services (not Vercel + Fly) | Single platform, simpler ops |
+| 2026-03-29 | Slideshow preview instead of waiting for Remotion | Gets 80% of experience now |
+| 2026-03-29 | Shareable links before team features | Solves the immediate need (feedback) without the complexity of multi-user |
+| 2026-03-29 | Lexicon rename before adding series | Foundational — rename once, not twice |
