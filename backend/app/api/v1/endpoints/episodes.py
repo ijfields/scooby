@@ -22,6 +22,28 @@ from app.schemas.episode import (
 router = APIRouter()
 
 
+@router.get("/by-story/{story_id}", response_model=list[EpisodeResponse])
+async def list_episodes_for_story(
+    story_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[Episode]:
+    """List all episodes for a given story."""
+    # Verify story ownership
+    story_result = await db.execute(
+        select(Story).where(Story.id == story_id, Story.user_id == user.id)
+    )
+    if story_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found")
+
+    result = await db.execute(
+        select(Episode)
+        .where(Episode.story_id == story_id)
+        .order_by(Episode.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
 @router.post(
     "/from-story/{story_id}",
     response_model=EpisodeResponse,
