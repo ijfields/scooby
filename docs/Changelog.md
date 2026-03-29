@@ -6,6 +6,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.3.0] — 2026-03-28
+
+### [ADDED]
+- Frontend Railway deployment with Dockerfile multi-stage build and standalone output
+- Celery worker Railway service (`Dockerfile.worker`) for async AI pipeline tasks
+- Root endpoint (`/`) on backend returning service status JSON
+- Voice ID validation with free-tier fallback in TTS generator
+- Comprehensive deployment guide (`DEPLOY.md`) with troubleshooting
+
+### [FIXED]
+- CORS: Added production frontend URL to `ALLOWED_ORIGINS`
+- JWT auth: Changed `pyjwt` to `pyjwt[crypto]` for RSA algorithm support
+- UUID serialization: Changed `UserResponse.id` from `str` to `uuid.UUID`
+- Trailing slash redirects: Collection routes use `""` instead of `"/"` to prevent 307 → mixed content
+- Celery task discovery: Added `include=["app.tasks.ai", "app.tasks.pipeline"]` to celery config
+- Celery task routing: Mapped pipeline tasks to correct queues, added default `celery` queue to worker
+- ElevenLabs TTS model: Upgraded from deprecated `eleven_monolingual_v1` to `eleven_multilingual_v2`
+- ElevenLabs voice fallback: Invalid voice IDs now fall back to George (Warm Storyteller)
+- Duplicate video assets: Queries use `ORDER BY created_at DESC LIMIT 1` for retry resilience
+- Backend Dockerfile: Fixed relative paths for `/backend` root directory context
+- Backend start command: Wrapped in `sh -c` for `${PORT}` variable expansion
+- Frontend Dockerfile: Fixed paths for `/frontend` root directory context
+
+### [CHANGED]
+- Backend builder switched from nixpacks to Dockerfile in `railway.toml`
+- Removed root-level `railway.toml` to prevent service config conflicts in monorepo
+
+---
+
 ## [0.2.0] — 2026-03-26
 
 ### [ADDED]

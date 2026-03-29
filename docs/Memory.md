@@ -10,10 +10,11 @@
 |-------|--------|
 | Ideation & Research | Completed |
 | Documentation | Completed |
-| Environment Setup | **Next** |
-| Landing Page Build | Planned |
-| Core Wizard Flow | Planned |
-| Video Pipeline | Planned |
+| Environment Setup | Completed |
+| Landing Page Build | Completed |
+| Core Wizard Flow | Completed |
+| Railway Deployment | Completed |
+| Video Pipeline | **In Progress** — images + TTS working, Remotion rendering TODO |
 
 ---
 
@@ -43,17 +44,17 @@
 
 ## Current
 
-**Status:** Documentation complete. Ready to begin environment setup.
+**Status:** Full platform deployed on Railway. Video pipeline working through image generation and TTS. Remotion video rendering not yet integrated into worker container.
 
 ---
 
 ## Next Steps
 
-1. **Environment setup** — Initialize monorepo, scaffold frontend (Next.js 14+), backend (FastAPI), and Remotion sidecar
-2. **Database setup** — Docker Compose for PostgreSQL + Redis, run initial migrations
-3. **Landing page build** — Hero section, How It Works, Features, CTA, Footer
-4. **Auth integration** — Clerk setup, JWT verification, user sync
-5. **Story intake UI** — Text input page with validation and API integration
+1. **Remotion integration** — Add Node.js + Remotion to worker container, or create separate rendering service
+2. **Preview page** — Wire up video player to rendered MP4
+3. **Export/download** — Enable MP4 download from preview page
+4. **Style preset seeding** — Ensure DB has valid voice IDs (free-tier compatible)
+5. **Error recovery** — Better retry logic to avoid duplicate asset generation
 
 ---
 
@@ -71,6 +72,11 @@
 | 2026-03-25 | ElevenLabs for TTS | Natural-sounding voices, easy API, voice presets |
 | 2026-03-25 | Clerk for auth | Fast integration, social logins, JWT for backend verification |
 | 2026-03-25 | Combined landing page + app | Phase 1 is a single entry point — hero → CTA → wizard |
+| 2026-03-28 | Railway for all services (not Vercel) | Keep frontend + backend + worker on same platform for simplicity |
+| 2026-03-28 | Monorepo Dockerfile per service | Each service has its own Dockerfile; root dir controls which `railway.toml` is read |
+| 2026-03-28 | ElevenLabs `eleven_multilingual_v2` | `eleven_monolingual_v1` deprecated on free tier |
+| 2026-03-28 | Voice ID fallback to free-tier voices | Style presets may reference unavailable voices; code falls back gracefully |
+| 2026-03-28 | Default `celery` queue in worker | Catches unrouted tasks that don't match explicit routing rules |
 
 ---
 
@@ -80,6 +86,6 @@
 |---|----------|--------|
 | 1 | Should MVP be sessionless (no auth) or require sign-up? | Leaning toward requiring auth via Clerk for persistence |
 | 2 | Free tier limits — how many episodes per user? | TBD — depends on per-episode cost (~$0.30-0.67) |
-| 3 | Hosting: Vercel + Fly.io vs. single VPS vs. cloud? | TBD — evaluate during environment setup |
+| 3 | Hosting: Vercel + Fly.io vs. single VPS vs. cloud? | **Resolved** — Railway for all services |
 | 4 | Voice dictation for story input — Phase 1 or 1.5? | Deferred to Phase 1.5 |
 | 5 | Should we support story file upload (txt, docx)? | Deferred — paste/type only for MVP |
