@@ -86,15 +86,28 @@ async def get_current_clerk_user_id(request: Request) -> str:
 
 
 async def get_current_user(
+    request: Request,
     clerk_id: str = Depends(get_current_clerk_user_id),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Get the local User record for the authenticated Clerk user."""
+    """Get the local User record for the authenticated Clerk user.
+
+    Auto-creates the user on first request so the frontend doesn't
+    need to call /auth/sync manually.
+    """
     result = await db.execute(select(User).where(User.clerk_id == clerk_id))
     user = result.scalar_one_or_none()
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found. Call POST /api/v1/auth/sync first.",
-        )
+        # Extract email from Clerk JWT claims
+        token = _extract_token(request)
+        try:
+            claims = jwt.decode(token, options={"verify_signature": False})
+            email = claims.get("email") or claims.get("primary_email") or f"{clerk_id}@clerk.user"
+        except Exception:
+            email = f"{clerk_id}@clerk.user"
+
+        user = User(clerk_id=clerk_id, email=email)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
     return user

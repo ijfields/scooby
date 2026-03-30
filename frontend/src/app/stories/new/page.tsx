@@ -30,13 +30,6 @@ export default function NewStoryPage() {
     try {
       const token = await getToken();
 
-      // Sync user first (idempotent)
-      await apiFetch("/api/v1/auth/sync", {
-        method: "POST",
-        token: token ?? undefined,
-        body: JSON.stringify({ email: "user@scooby.app" }),
-      }).catch(() => {});
-
       const story = await apiFetch<{ id: string }>("/api/v1/stories", {
         method: "POST",
         token: token ?? undefined,
