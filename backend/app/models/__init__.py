@@ -7,6 +7,7 @@ from app.models.episode import Episode
 from app.models.scene import Scene
 from app.models.video_asset import VideoAsset
 from app.models.generation_job import GenerationJob
+from app.models.share_token import ShareToken
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "Scene",
     "VideoAsset",
     "GenerationJob",
+    "ShareToken",
 ]
