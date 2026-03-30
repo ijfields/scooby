@@ -60,9 +60,9 @@
 | Item | Scope | Status |
 |------|-------|--------|
 | Competitive intelligence | FireCrawl analysis of 5 competitors — [see report](research/Competitive_Intelligence.md) | **Done** |
-| Color palette | Pick 1 primary + 1 accent color, update CSS variables (informed by competitor analysis) | Not started |
-| Typography | Choose a heading font, keep system sans for body | Not started |
-| Logo | Even a text wordmark with the right font makes a difference | Not started |
+| Color palette | Deep Violet primary (#6D28D9) + Warm Amber accent (#F59E0B), full OKLCH system | **Done** |
+| Typography | Playfair Display (headings), Inter (body), Geist Mono (code) | **Done** |
+| Logo | "scooby" wordmark in Playfair Display italic | **Done** |
 | Hero animation | Scroll-triggered before/after: raw story text → finished video scene (inspired by Nano Banana 2 technique) | Not started |
 | Dark mode | Currently has CSS variables but not tested/polished | Not started |
 | Empty states | Add illustrations or branded graphics | Partially done |

@@ -120,7 +120,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(109,40,217,0.12),transparent)]" />
           <div className="mx-auto flex max-w-3xl flex-col items-center px-4 pt-24 pb-20 text-center sm:px-6 sm:pt-32 sm:pb-28">
             <p className="mb-4 text-sm font-medium tracking-widest uppercase text-muted-foreground">
               Canva for stories
@@ -129,7 +129,7 @@ export default function Home() {
               Your stories deserve
               <br />
               to be{" "}
-              <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 seen
               </span>
             </h1>
@@ -221,10 +221,10 @@ export default function Home() {
               Preview your story as an immersive slideshow before exporting.
             </p>
             <div className="mx-auto mt-10 flex max-w-xs flex-col items-center gap-6">
-              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border-2 border-border bg-gradient-to-b from-indigo-950 to-gray-950 shadow-xl">
+              <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border-2 border-border bg-gradient-to-b from-[oklch(0.2_0.05_292)] to-[oklch(0.12_0.03_292)] shadow-xl">
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-                  <div className="rounded-full bg-violet-500/20 p-4">
-                    <PlayIcon className="h-10 w-10 text-violet-400" />
+                  <div className="rounded-full bg-primary/20 p-4">
+                    <PlayIcon className="h-10 w-10 text-primary" />
                   </div>
                   <div className="space-y-2 text-center">
                     <p className="text-sm font-medium text-white/90">Scene-by-scene preview</p>
@@ -233,7 +233,7 @@ export default function Home() {
                 </div>
                 {/* Fake scene dots */}
                 <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5">
-                  <div className="h-1.5 w-5 rounded-full bg-violet-400" />
+                  <div className="h-1.5 w-5 rounded-full bg-accent" />
                   <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
                   <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
                   <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
