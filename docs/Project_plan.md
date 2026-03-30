@@ -59,12 +59,15 @@
 
 | Item | Scope | Status |
 |------|-------|--------|
-| Color palette | Pick 1 primary + 1 accent color, update CSS variables | Not started |
+| Competitive intelligence | FireCrawl analysis of 5 competitors — [see report](research/Competitive_Intelligence.md) | **Done** |
+| Color palette | Pick 1 primary + 1 accent color, update CSS variables (informed by competitor analysis) | Not started |
 | Typography | Choose a heading font, keep system sans for body | Not started |
 | Logo | Even a text wordmark with the right font makes a difference | Not started |
+| Hero animation | Scroll-triggered before/after: raw story text → finished video scene (inspired by Nano Banana 2 technique) | Not started |
 | Dark mode | Currently has CSS variables but not tested/polished | Not started |
 | Empty states | Add illustrations or branded graphics | Partially done |
 | Loading states | Consistent spinner/skeleton pattern | Partially done |
+| UI/UX audit | Run accessibility, SEO, and design audit on landing page (post-branding) | Not started |
 
 ### Priority 3: Shareable Preview Links
 
@@ -147,6 +150,16 @@ See [Enhancements.md](./Enhancements.md).
 | Remotion video export | After feedback | Pending |
 | Production Clerk keys | Before public launch | Pending |
 | Public beta | TBD | Pending |
+
+---
+
+## Research & References
+
+| Date | Source | Key Takeaway | Applies To |
+|------|--------|-------------|------------|
+| 2026-03-29 | [Claude Code + Nano Banana 2 + FireCrawl = Epic $12k Websites](https://www.youtube.com/watch?v=2gvFLFl4xw8) (Jack Roberts) | FireCrawl competitive intelligence process: scrape competitor sites → analyze design/copy/trust signals/SEO → synthesize "winning blueprint" with color palettes and content patterns | Priority 2: Branding |
+| 2026-03-29 | Same video | Scroll-triggered hero animation (before/after transformation on scroll) — for Scooby: raw text → finished video scene | Priority 2: Hero animation |
+| 2026-03-29 | Same video | UI/UX audit skill: run hundreds of accessibility + SEO + design checks as final polish pass | Priority 2: UI/UX audit |
 
 ---
 

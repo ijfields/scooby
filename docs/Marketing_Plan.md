@@ -1,7 +1,7 @@
 # Scooby — Marketing Plan
 
-> **Version:** 0.1 (MVP Launch)
-> **Last updated:** 2026-03-25
+> **Version:** 0.2 (MVP Launch)
+> **Last updated:** 2026-03-29
 
 ---
 
@@ -26,6 +26,30 @@
 | **Secondary: BookTok creators**  | Readers/writers creating book-related content     | TikTok, Instagram Reels, YouTube Shorts                     | Engaging visual content from their stories or favorite narratives              |
 | **Tertiary: Writing educators**  | Teachers, workshop leaders, writing coaches       | Writing conferences, online courses, educational platforms  | Demo tools that make storytelling tangible for students                        |
 
+
+---
+
+## 2.5 Competitive Intelligence (FireCrawl)
+
+**Source:** [Jack Roberts — Claude Code + Nano Banana 2 + FireCrawl](https://www.youtube.com/watch?v=2gvFLFl4xw8)
+
+**Process:** Use FireCrawl to systematically scrape and analyze competitor landing pages, then synthesize a "winning blueprint" for Scooby's own site.
+
+| Competitor | Category | What to Extract |
+|-----------|----------|----------------|
+| Pictory | AI text-to-video | Landing page structure, trust signals, CTA copy, color palette |
+| InVideo | AI video creation | Same + pricing page layout, feature presentation |
+| Lumen5 | Blog-to-video | Same + content marketing approach, SEO keywords |
+| Kapwing | Online video editor | Same + onboarding flow, empty states |
+| Canva (video) | Design platform | Same + how they position video within a broader tool |
+
+**Deliverable:** [Competitive Intelligence Report](research/Competitive_Intelligence.md) — completed 2026-03-29. Includes:
+- Competitor profiles with screenshots, color palettes, brand tones
+- Common patterns across winners (trust signals, page structure, CTA placement)
+- SEO landscape: keyword gaps and opportunities for "story to video" positioning
+- Recommended landing page structure for Scooby based on what works
+
+**Landing page hero concept:** Scroll-triggered before/after animation showing raw story text transforming into a finished video scene — instantly communicates the value prop. (Technique from same video using image generation + video transition.)
 
 ---
 
