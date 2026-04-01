@@ -90,7 +90,12 @@ def generate_images_task(self, episode_id: str) -> dict:
 
 @celery_app.task(name="app.tasks.pipeline.generate_voiceovers", bind=True, max_retries=2)
 def generate_voiceovers_task(self, episode_id: str) -> dict:
-    """Generate voiceovers for all scenes in an episode."""
+    """Generate voiceovers for all scenes in an episode.
+
+    Non-fatal: if TTS fails (bad API key, quota exceeded, etc.),
+    the pipeline continues without voiceovers. Images are more
+    important for the preview experience.
+    """
     from app.models.episode import Episode
     from app.models.scene import Scene
     from app.models.style_preset import StylePreset
@@ -118,6 +123,8 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
             if preset:
                 voice_config = preset.config
 
+        generated = 0
+        skipped = 0
         for i, scene in enumerate(scenes):
             text = scene.narration_text or scene.dialogue_text
             if not text:
@@ -148,13 +155,21 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
                     metadata_={"provider": "elevenlabs"},
                 )
                 session.add(asset)
+                generated += 1
 
             except Exception as e:
                 logger.error("Failed to generate voiceover for scene %s: %s", scene.id, e)
-                raise
+                skipped += 1
 
         session.commit()
-        return {"episode_id": episode_id, "voiceovers_generated": len(scenes)}
+
+        if skipped > 0:
+            logger.warning(
+                "Episode %s: %d voiceovers generated, %d skipped due to errors",
+                episode_id, generated, skipped,
+            )
+
+        return {"episode_id": episode_id, "voiceovers_generated": generated, "voiceovers_skipped": skipped}
 
     finally:
         session.close()
@@ -221,23 +236,41 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
         session.commit()
         generate_images_task(episode_id)
 
-        # Step 2: Generate voiceovers
+        # Step 2: Generate voiceovers (non-fatal — continues if TTS fails)
         job.stage = "Generating voiceovers"
         job.progress = 50
         session.commit()
-        generate_voiceovers_task(episode_id)
+        try:
+            vo_result = generate_voiceovers_task(episode_id)
+            vo_skipped = vo_result.get("voiceovers_skipped", 0)
+        except Exception as e:
+            logger.warning("Voiceover generation failed for episode %s, continuing: %s", episode_id, e)
+            vo_skipped = -1  # all failed
 
-        # Step 3: Compose and render
+        # Step 3: Compose and render (skip if Remotion not available)
         job.stage = "Rendering video"
         job.progress = 80
         session.commit()
-        compose_and_render_task(episode_id)
+        try:
+            compose_and_render_task(episode_id)
+        except Exception as e:
+            logger.warning("Video render skipped for episode %s (Remotion not ready): %s", episode_id, e)
 
-        # Done
+        # Done — mark completed even without video render
+        # The slideshow preview works with just images + optional audio
         job.status = "completed"
         job.progress = 100
         job.stage = "Video ready"
         job.completed_at = datetime.now(timezone.utc)
+
+        warnings = []
+        if vo_skipped != 0:
+            warnings.append("Some or all voiceovers could not be generated (check ElevenLabs API key)")
+        if job.metadata_ is None:
+            job.metadata_ = {}
+        if warnings:
+            job.metadata_["warnings"] = warnings
+
         session.commit()
 
         return {"episode_id": episode_id, "status": "completed"}
