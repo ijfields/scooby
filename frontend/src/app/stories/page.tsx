@@ -11,6 +11,7 @@ interface Story {
   title: string;
   word_count: number;
   status: string;
+  source_type: string;
   created_at: string;
 }
 
@@ -81,14 +82,21 @@ export default function StoriesPage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="font-semibold">{story.title}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-semibold">{story.title}</h2>
+                    {story.source_type === "youtube" && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                        YouTube Series
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {story.word_count} words &middot;{" "}
                     {new Date(story.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium capitalize text-muted-foreground">
-                  {story.status}
+                  {story.status.replace(/_/g, " ")}
                 </span>
               </div>
             </Link>

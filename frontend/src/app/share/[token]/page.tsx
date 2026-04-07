@@ -8,10 +8,17 @@ import { ScenePlayer, type SceneWithAssets } from "@/components/scene-player";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+interface Attribution {
+  channel: string | null;
+  video_title: string | null;
+  youtube_url: string | null;
+}
+
 interface SharedPreview {
   title: string | null;
   target_duration_sec: number;
   scenes: SceneWithAssets[];
+  attribution: Attribution | null;
 }
 
 export default function SharedPreviewPage() {
@@ -91,6 +98,27 @@ export default function SharedPreviewPage() {
             {preview.scenes.length} scenes &middot; {Math.round(totalDuration)}s
           </p>
         </div>
+
+        {/* Attribution */}
+        {preview.attribution && (
+          <div className="mb-4 rounded-lg border bg-muted/50 p-3">
+            <p className="text-sm text-muted-foreground">
+              Based on{" "}
+              <a
+                href={preview.attribution.youtube_url ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+              >
+                {preview.attribution.video_title || "original video"}
+              </a>{" "}
+              by{" "}
+              <span className="font-medium text-foreground">
+                {preview.attribution.channel || "Unknown Channel"}
+              </span>
+            </p>
+          </div>
+        )}
 
         {/* Player */}
         <ScenePlayer scenes={preview.scenes} title={preview.title} />

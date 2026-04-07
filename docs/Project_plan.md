@@ -1,8 +1,8 @@
 # Scooby — Phased Project Plan
 
-> **Version:** 0.4
-> **Last updated:** 2026-03-29
-> **Focus:** Phase 1 completion — Lexicon, Branding, Shareable Previews
+> **Version:** 0.5
+> **Last updated:** 2026-03-31
+> **Focus:** YouTube-to-Series feature — new input path for content repurposing
 
 ---
 
@@ -84,6 +84,55 @@ This is simpler and more useful than team/multi-user features right now.
 
 ---
 
+## New Sprint: YouTube-to-Series (Phase 1.6)
+
+> **Goal:** Add a second input path — paste a YouTube URL, AI plans a multi-episode series from the transcript, each episode flows through the existing pipeline.
+> **Branch:** `feat/youtube-to-series`
+> **Competitive angle:** Unlike Opus Clip (algorithmic clipping), CapCut (manual editing), or Descript (transcript editing), Scooby *reimagines* video content as a series of standalone visual stories with AI-generated imagery and dramatic structure.
+
+### Backend Tasks
+
+| # | Task | Files | Status |
+|---|------|-------|--------|
+| 1 | Extend Story model: `source_type`, `source_url`, `source_meta` columns | `backend/app/models/story.py` | Not started |
+| 2 | Extend Episode model: `episode_number`, `series_angle` columns | `backend/app/models/episode.py` | Not started |
+| 3 | Alembic migration for new columns | `backend/alembic/versions/` | Not started |
+| 4 | YouTube transcript service: fetch, clean, metadata | `backend/app/services/youtube/transcript.py` (NEW) | Not started |
+| 5 | AI Series Planner: Claude prompt for series planning | `backend/app/services/ai/series_planner.py` (NEW) | Not started |
+| 6 | Schemas: `StoryCreateFromYouTube`, `SeriesPlanResponse`, updated responses | `backend/app/schemas/` | Not started |
+| 7 | API endpoints: import, plan review, approve | `backend/app/api/v1/endpoints/youtube_import.py` (NEW) | Not started |
+| 8 | Celery tasks: fetch+plan, approve+breakdown | `backend/app/tasks/youtube.py` (NEW) | Not started |
+| 9 | Add `youtube-transcript-api` dependency | `backend/requirements.txt` | Not started |
+| 10 | Attribution system: auto-attach source credit to episodes | `backend/app/services/attribution.py` (NEW) | Not started |
+| 11 | Video end card: burn "Based on content by [Channel]" into generated video | `backend/app/services/video/composer.py` | Not started |
+
+### Frontend Tasks
+
+| # | Task | Files | Status |
+|---|------|-------|--------|
+| 1 | Tab switcher on story creation: "Write a Story" / "Import from YouTube" | `frontend/src/app/stories/new/page.tsx` | Not started |
+| 2 | YouTube import form: URL input + fair use checkbox | Same file | Not started |
+| 3 | Series plan review UI on story detail page | `frontend/src/app/stories/[id]/page.tsx` | Not started |
+| 4 | Source badge on stories list (YouTube vs original) | `frontend/src/app/stories/page.tsx` | Not started |
+| 5 | Updated types for Story/Episode responses | Frontend types | Not started |
+| 6 | Attribution display on preview page: "Based on [Title] by [Channel]" with link | `frontend/src/app/episodes/[id]/preview/page.tsx` | Not started |
+| 7 | Attribution on share page (visible without login) | `frontend/src/app/share/[token]/page.tsx` | Not started |
+| 8 | Relationship selector on import form: "I created this" / "I have permission" / "Fair use" | `frontend/src/app/stories/new/page.tsx` | Not started |
+
+### Data Flow
+
+```
+YouTube URL → POST /youtube/import
+  → [Celery] fetch transcript + AI series plan
+  → Story.status = "plan_ready"
+  → User reviews & edits plan
+  → POST /youtube/{id}/approve
+  → [Celery] create Episodes → existing breakdown pipeline
+  → [EXISTING] scene breakdown → images → voiceover → video
+```
+
+---
+
 ## Phase 1 Remaining Work (after current sprint)
 
 ### 1.9 Preview & Export (remaining)
@@ -143,8 +192,11 @@ See [Enhancements.md](./Enhancements.md).
 | Story → AI scenes → edit → style → generate pipeline | 2026-03-28 | **Done** |
 | Scene-by-scene preview with images + audio | 2026-03-29 | **Done** |
 | Episode navigation (revisit generated content) | 2026-03-29 | **Done** |
-| Lexicon locked + rename | Next session | Pending |
-| Branding pass (palette, typography, logo) | Next session | Pending |
+| YouTube-to-Series: backend pipeline | 2026-03-31 | **In progress** |
+| YouTube-to-Series: frontend import flow | Next session | Pending |
+| YouTube-to-Series: series plan review UI | Next session | Pending |
+| Lexicon locked + rename | After YouTube feature | Pending |
+| Branding pass (palette, typography, logo) | After lexicon | Pending |
 | Shareable preview links | After branding | Pending |
 | Cofounder feedback incorporated | Ongoing | Pending |
 | Remotion video export | After feedback | Pending |
@@ -174,3 +226,6 @@ See [Enhancements.md](./Enhancements.md).
 | 2026-03-29 | Slideshow preview instead of waiting for Remotion | Gets 80% of experience now |
 | 2026-03-29 | Shareable links before team features | Solves the immediate need (feedback) without the complexity of multi-user |
 | 2026-03-29 | Lexicon rename before adding series | Foundational — rename once, not twice |
+| 2026-03-31 | YouTube-to-Series as second input path | Makes Scooby "Canva with multi-use" — differentiates from Opus Clip/CapCut/Descript by reimagining content, not clipping it |
+| 2026-03-31 | Story model as series container (no new Series model) | Story already has one-to-many with Episodes — YouTube import just produces more episodes |
+| 2026-03-31 | Two-stage AI: series planner + existing scene breakdown | Reuses existing pipeline — only the planning layer is new |

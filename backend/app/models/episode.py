@@ -33,6 +33,11 @@ class Episode(Base, TimestampMixin):
     final_video_url: Mapped[str | None] = mapped_column(Text)
     final_video_duration_sec: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
     script_pdf_url: Mapped[str | None] = mapped_column(Text)
+    episode_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    series_angle: Mapped[str | None] = mapped_column(Text, nullable=True)
+    generation_tier: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="standard"
+    )  # standard | enhanced | movie_lite | movie | movie_pro
 
     story: Mapped["Story"] = relationship(back_populates="episodes")
     scenes: Mapped[list["Scene"]] = relationship(

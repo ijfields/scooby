@@ -1,7 +1,7 @@
 # Scooby — Marketing Plan
 
-> **Version:** 0.2 (MVP Launch)
-> **Last updated:** 2026-03-29
+> **Version:** 0.3 (YouTube-to-Series Update)
+> **Last updated:** 2026-03-31
 
 ---
 
@@ -9,11 +9,17 @@
 
 **Tagline:** "Your stories deserve to be seen."
 
-**One-liner:** Scooby turns your written stories into vertical drama videos — no editing skills required.
+**One-liner:** Scooby turns your written stories *and* YouTube videos into vertical drama series — no editing skills required.
 
-**Category:** AI-powered creative tool for writers
+**Category:** AI-powered multi-use creative platform
 
-**Differentiator:** Unlike generic AI video tools, Scooby is built around the writer's workflow. It preserves the writer's voice, gives them editorial control through simple scene cards, and handles all the production automatically.
+**Differentiator:** Unlike clip-based tools (Opus Clip) or video editors (CapCut, Descript), Scooby *reimagines* content as visual storytelling. It doesn't slice or edit the original — it creates entirely new visual stories with AI-generated imagery, dramatic structure, and narration. Two input paths (original text + YouTube import), one beautiful output.
+
+**Competitive Positioning:**
+
+| vs. Opus Clip | vs. CapCut | vs. Descript |
+|--------------|-----------|-------------|
+| Opus finds "viral moments" and clips them. Scooby understands the *argument* and creates a visual story series. | CapCut requires editing skills. Scooby is zero-edit: paste URL, review plan, generate. | Descript edits the original footage. Scooby creates *new* visual content — transformative, not derivative. |
 
 ---
 
@@ -24,6 +30,7 @@
 | -------------------------------- | ------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | **Primary: Unpublished writers** | Independent fiction writers with finished stories | Writing communities, NaNoWriMo, Wattpad, writing subreddits | To see their stories come to life, reach new audiences, potential monetization |
 | **Secondary: BookTok creators**  | Readers/writers creating book-related content     | TikTok, Instagram Reels, YouTube Shorts                     | Engaging visual content from their stories or favorite narratives              |
+| **Secondary: Content repurposers** | YouTubers, podcasters, educators, commentators | YouTube, podcast platforms, educational content | Repurpose long-form content into short-form vertical video series without manual editing |
 | **Tertiary: Writing educators**  | Teachers, workshop leaders, writing coaches       | Writing conferences, online courses, educational platforms  | Demo tools that make storytelling tangible for students                        |
 
 
@@ -113,6 +120,10 @@
 **For BookTok creators:**
 
 > "Stop describing books. Start showing them. Turn any story into a 90-second drama for your feed."
+
+**For content creators / YouTubers:**
+
+> "Your 45-minute video becomes 5 standalone visual stories — each one a scroll-stopping drama for TikTok and Reels. Not clips. Not edits. Brand new visual content from your ideas."
 
 **For writing teachers:**
 
@@ -260,5 +271,7 @@ Secondary: `#WritersOfTikTok` `#BookTok` `#IndieWriter` `#ShortFilm` `#AICreativ
 | Low completion rate                               | Simplify wizard, add save-and-resume, email reminders for incomplete episodes             |
 | Content moderation issues                         | Basic safety checks on AI output, terms of service, report mechanism                      |
 | Competitor launches similar tool                  | Move fast, build community, focus on writer-specific experience                           |
+| YouTube creators object to their content being reimagined | Auto-attribution is non-removable, DMCA takedown process, nudge users toward importing their own content or getting permission. Future: creator verification via YouTube OAuth |
+| Copyright/fair use challenges | Output is transformative (AI imagery + rewritten narration, not clips). Relationship selector documents user intent. ToS places responsibility on user |
 
 

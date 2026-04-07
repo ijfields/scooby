@@ -50,10 +50,17 @@ class SharedScene(BaseModel):
     assets: list[SharedAssetInfo]
 
 
+class AttributionInfo(BaseModel):
+    channel: str | None = None
+    video_title: str | None = None
+    youtube_url: str | None = None
+
+
 class SharedPreviewResponse(BaseModel):
     title: str | None
     target_duration_sec: int
     scenes: list[SharedScene]
+    attribution: AttributionInfo | None = None
 
 
 # --- Authenticated: create/manage share links ---
@@ -175,8 +182,22 @@ async def get_shared_preview(
             )
         )
 
+    # Check if this episode comes from a YouTube source
+    attribution = None
+    story_result = await db.execute(
+        select(Story).where(Story.id == episode.story_id)
+    )
+    story = story_result.scalar_one_or_none()
+    if story and story.source_type == "youtube" and story.source_meta:
+        attribution = AttributionInfo(
+            channel=story.source_meta.get("channel"),
+            video_title=story.source_meta.get("video_title"),
+            youtube_url=story.source_meta.get("youtube_url"),
+        )
+
     return SharedPreviewResponse(
         title=episode.title,
         target_duration_sec=episode.target_duration_sec,
         scenes=shared_scenes,
+        attribution=attribution,
     )

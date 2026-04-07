@@ -11,9 +11,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface Episode {
   id: string;
+  story_id: string;
   title: string | null;
   status: string;
   target_duration_sec: number;
+  episode_number: number | null;
+  series_angle: string | null;
+}
+
+interface Story {
+  id: string;
+  source_type: string;
+  source_url: string | null;
+  source_meta: Record<string, unknown> | null;
 }
 
 export default function PreviewPage() {
@@ -26,6 +36,7 @@ export default function PreviewPage() {
   const [loading, setLoading] = useState(true);
   const [hasAssets, setHasAssets] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [story, setStory] = useState<Story | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -38,6 +49,17 @@ export default function PreviewPage() {
           { token: token ?? undefined },
         );
         setEpisode(ep);
+
+        // Fetch story for attribution
+        try {
+          const storyData = await apiFetch<Story>(
+            `/api/v1/stories/${ep.story_id}`,
+            { token: token ?? undefined },
+          );
+          setStory(storyData);
+        } catch {
+          // Non-critical — attribution just won't show
+        }
 
         try {
           const scenesData = await apiFetch<SceneWithAssets[]>(
@@ -171,6 +193,27 @@ export default function PreviewPage() {
           </Button>
         </div>
       </div>
+
+      {/* Attribution for YouTube-sourced episodes */}
+      {story?.source_type === "youtube" && story.source_meta && (
+        <div className="mt-4 rounded-lg border bg-muted/50 p-3">
+          <p className="text-sm text-muted-foreground">
+            Based on{" "}
+            <a
+              href={story.source_url ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+            >
+              {(story.source_meta.video_title as string) || "original video"}
+            </a>{" "}
+            by{" "}
+            <span className="font-medium text-foreground">
+              {(story.source_meta.channel as string) || "Unknown Channel"}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* Player */}
       <div className="mt-6">

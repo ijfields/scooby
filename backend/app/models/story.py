@@ -4,6 +4,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
@@ -24,6 +25,11 @@ class Story(Base, TimestampMixin):
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
     word_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
+    source_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="original"
+    )
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="stories")
     episodes: Mapped[list["Episode"]] = relationship(
