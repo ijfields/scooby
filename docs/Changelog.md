@@ -6,6 +6,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.5.0] — 2026-03-31 (In Progress)
+
+### [ADDED]
+- YouTube-to-Series input path: paste a YouTube URL to create a multi-episode visual series
+- AI Series Planner: Claude analyzes full video transcript and plans 3-8 standalone episodes with dramatic structure
+- YouTube transcript extraction service with auto-caption cleanup
+- Series plan review UI: edit titles, remove episodes, reorder before generating
+- `source_type`, `source_url`, `source_meta` columns on Story model for multi-source support
+- `episode_number`, `series_angle` columns on Episode model for series ordering
+- `POST /api/v1/youtube/import` — import YouTube video and plan series
+- `GET /api/v1/youtube/{story_id}/plan` — retrieve series plan for review
+- `POST /api/v1/youtube/{story_id}/approve` — approve plan and start episode generation
+- Tab switcher on story creation page: "Write a Story" / "Import from YouTube"
+- Fair use acknowledgment + relationship selector on YouTube import form
+- Automatic non-removable attribution on all YouTube-sourced episodes (preview, share, MP4 end card)
+- Source badge on stories list (YouTube vs original)
+
+### [CHANGED]
+- PRD updated to v0.2 with two input paths, content repurposer persona, and competitive differentiation
+- Project plan updated to v0.5 with YouTube-to-Series sprint
+- Marketing plan updated with content repurposing positioning
+- Overview deck updated with "Canva with multi-use" pitch
+
+---
+
 ## [0.4.0] — 2026-03-29
 
 ### [ADDED]

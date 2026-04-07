@@ -25,6 +25,7 @@ FREE_VOICE_IDS = {
     "SOYHLrjzK2X1ezoPC6cr",  # Harry
     "TX3LPaxmHKxFdv7VOQHJ",  # Liam
     "Xb7hH8MSUJpSbSDYk0k2",  # Alice
+    "qVpGLzi5EhjW3WGVhOa9",  # Urban (library voice, requires Starter+)
 }
 
 

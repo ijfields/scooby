@@ -57,7 +57,7 @@ style: |
 
 **"Canva for Stories"**
 
-Turn your written stories into stunning vertical drama videos — no tech skills needed.
+Turn your written stories *or* YouTube videos into stunning vertical drama series — no tech skills needed.
 
 ---
 
@@ -84,15 +84,21 @@ Everything else is automated behind a simple, guided interface.
 
 ---
 
-## How It Works
+## How It Works — Two Ways In
 
-### 5 simple steps:
-
+### Path A: Write a Story
 1. **Paste your story** (300-800 words)
 2. **Review scene cards** — AI breaks your story into 5-7 visual beats
 3. **Pick a style** — choose a visual look and narrator voice
 4. **Generate** — AI creates images, voiceover, and assembles the video
 5. **Download** — get your finished MP4, ready for TikTok/Reels/Shorts
+
+### Path B: Import from YouTube
+1. **Paste a YouTube URL** (any length video)
+2. **Review series plan** — AI plans 3-8 standalone episodes from the transcript
+3. **Approve & customize** — edit titles, remove episodes, pick styles
+4. **Generate** — AI creates a complete visual series
+5. **Download** — get each episode as a finished MP4
 
 ---
 
@@ -126,8 +132,8 @@ Perfect for **TikTok**, **Instagram Reels**, and **YouTube Shorts**.
 
 ### Primary audience:
 
-- Independent and unpublished **fiction writers**
-- Writers with stories but **no production budget**
+- Independent and unpublished **fiction writers** — turn stories into visual dramas
+- **YouTubers, podcasters, and educators** — repurpose long-form content into short-form series
 - Creators who want to reach audiences on **short-form video platforms**
 
 ### Later:
@@ -135,6 +141,21 @@ Perfect for **TikTok**, **Instagram Reels**, and **YouTube Shorts**.
 - Poets, diarists, bloggers
 - Writing teachers and coaches
 - Screenwriters prototyping ideas
+
+---
+
+## Why Not Just Use Opus Clip?
+
+| Tool | What it does | What you get |
+|------|-------------|-------------|
+| **Opus Clip** | Finds "viral moments" and clips them | Choppy clips from original footage |
+| **CapCut** | Manual video editing with AI assists | Requires editing skills |
+| **Descript** | Edit video by editing transcript | Still the original footage |
+| **Scooby** | AI *reimagines* content as visual storytelling | A series of brand-new visual stories |
+
+> Scooby doesn't clip your video. It understands the **ideas** and creates something **new**.
+
+A 45-minute commentary becomes 5 standalone 90-second visual stories — each with AI-generated imagery, narrated voiceover, and dramatic structure. **Transformative, not derivative.**
 
 ---
 
@@ -177,7 +198,10 @@ We've designed and documented the **entire platform** before writing a single li
 ## The Bigger Picture
 
 ### Phase 1 (Now)
-Single writer, single episode. Story in, video out.
+Two input paths: **Write a story** or **Import from YouTube**. Multi-use creative platform.
+
+### Phase 1.5 (Next)
+More sources: podcasts, articles, uploaded transcripts. **Veo Movie Mode** for cinematic AI video clips.
 
 ### Phase 2 (Future)
 Collaboration — invite co-writers, work on series together, share styles.
