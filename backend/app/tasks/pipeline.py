@@ -28,7 +28,7 @@ def generate_images_task(self, episode_id: str) -> dict:
     from app.models.scene import Scene
     from app.models.style_preset import StylePreset
     from app.models.video_asset import VideoAsset
-    from app.services.image.generator import generate_image
+    from app.services.image.providers import get_image_provider
 
     session = _get_sync_session()
     try:
@@ -51,10 +51,15 @@ def generate_images_task(self, episode_id: str) -> dict:
             if preset:
                 style_config = preset.config
 
+        image_provider = get_image_provider()
+
         for i, scene in enumerate(scenes):
-            logger.info("Generating image %d/%d for episode %s", i + 1, len(scenes), episode_id)
+            logger.info(
+                "Generating image %d/%d for episode %s (provider: %s)",
+                i + 1, len(scenes), episode_id, image_provider.name,
+            )
             try:
-                image_bytes = generate_image(
+                image_bytes = image_provider.generate(
                     prompt=scene.visual_description,
                     style_suffix=style_config.get("style_prompt_suffix", ""),
                     negative_prompt=style_config.get("negative_prompt", ""),
@@ -68,7 +73,7 @@ def generate_images_task(self, episode_id: str) -> dict:
                     file_data=image_bytes,
                     file_size_bytes=len(image_bytes),
                     mime_type="image/png",
-                    metadata_={"provider": "stability-ai"},
+                    metadata_={"provider": image_provider.name},
                 )
                 session.add(asset)
 
@@ -83,6 +88,94 @@ def generate_images_task(self, episode_id: str) -> dict:
 
         session.commit()
         return {"episode_id": episode_id, "images_generated": len(scenes)}
+
+    finally:
+        session.close()
+
+
+@celery_app.task(name="app.tasks.pipeline.generate_animations", bind=True, max_retries=1)
+def generate_animations_task(self, episode_id: str) -> dict:
+    """Animate scene images into video clips (Movie Lite / Movie Pro tiers).
+
+    Skipped when VIDEO_ANIMATION_PROVIDER is "none" (Storyboard mode).
+    """
+    from app.models.episode import Episode
+    from app.models.scene import Scene
+    from app.models.video_asset import VideoAsset
+    from app.services.video.animation_providers import get_animation_provider
+
+    provider = get_animation_provider()
+    if provider is None:
+        logger.info("Animation provider is 'none' — skipping for episode %s", episode_id)
+        return {"episode_id": episode_id, "animations_generated": 0, "skipped": True}
+
+    session = _get_sync_session()
+    try:
+        scenes = list(
+            session.execute(
+                select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)
+            )
+            .scalars()
+            .all()
+        )
+
+        generated = 0
+        for i, scene in enumerate(scenes):
+            # Find the scene's image asset to animate
+            image_asset = session.execute(
+                select(VideoAsset).where(
+                    VideoAsset.scene_id == scene.id,
+                    VideoAsset.asset_type == "image",
+                )
+            ).scalar_one_or_none()
+
+            if not image_asset:
+                logger.warning("No image asset for scene %s — skipping animation", scene.id)
+                continue
+
+            # Build a public URL for the image (WaveSpeed needs an accessible URL)
+            image_url = f"{settings.ALLOWED_ORIGINS.split(',')[0].strip()}/api/v1/assets/{image_asset.id}/file"
+
+            # Build animation prompt from visual description + beat type
+            beat_motions = {
+                "hook": "slow dramatic zoom in, atmospheric lighting",
+                "setup": "gentle pan across scene, establishing shot",
+                "escalation": "camera push in, increasing tension",
+                "climax": "dynamic camera movement, dramatic lighting shift",
+                "button": "slow pull back, fading atmosphere",
+            }
+            beat_type = getattr(scene, "beat_type", None) or "setup"
+            motion = beat_motions.get(beat_type, "subtle camera movement")
+            animation_prompt = f"{scene.visual_description}. Camera: {motion}."
+
+            logger.info(
+                "Animating scene %d/%d for episode %s (provider: %s)",
+                i + 1, len(scenes), episode_id, provider.name,
+            )
+            try:
+                video_bytes = provider.animate(
+                    image_url=image_url,
+                    prompt=animation_prompt,
+                    duration=5,
+                )
+
+                asset = VideoAsset(
+                    scene_id=scene.id,
+                    asset_type="animation",
+                    file_data=video_bytes,
+                    file_size_bytes=len(video_bytes),
+                    mime_type="video/mp4",
+                    metadata_={"provider": provider.name, "duration": 5},
+                )
+                session.add(asset)
+                generated += 1
+
+            except Exception as e:
+                logger.error("Failed to animate scene %s: %s", scene.id, e)
+                # Non-fatal: continue with remaining scenes
+
+        session.commit()
+        return {"episode_id": episode_id, "animations_generated": generated}
 
     finally:
         session.close()
@@ -236,9 +329,20 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
         session.commit()
         generate_images_task(episode_id)
 
-        # Step 2: Generate voiceovers (non-fatal — continues if TTS fails)
+        # Step 2: Animate scene images (if animation provider is configured)
+        job.stage = "Animating scenes"
+        job.progress = 40
+        session.commit()
+        try:
+            anim_result = generate_animations_task(episode_id)
+            if anim_result.get("skipped"):
+                logger.info("Animation skipped (Storyboard mode) for episode %s", episode_id)
+        except Exception as e:
+            logger.warning("Animation generation failed for episode %s, continuing: %s", episode_id, e)
+
+        # Step 3: Generate voiceovers (non-fatal — continues if TTS fails)
         job.stage = "Generating voiceovers"
-        job.progress = 50
+        job.progress = 60
         session.commit()
         try:
             vo_result = generate_voiceovers_task(episode_id)
@@ -247,9 +351,9 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
             logger.warning("Voiceover generation failed for episode %s, continuing: %s", episode_id, e)
             vo_skipped = -1  # all failed
 
-        # Step 3: Compose and render (skip if Remotion not available)
+        # Step 4: Compose and render (skip if Remotion not available)
         job.stage = "Rendering video"
-        job.progress = 80
+        job.progress = 85
         session.commit()
         try:
             compose_and_render_task(episode_id)

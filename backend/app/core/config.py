@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=("../.env", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     STABILITY_API_KEY: str = ""
     ELEVENLABS_API_KEY: str = ""
+    GOOGLE_API_KEY: str = ""       # Nanobanana 2 / Gemini image generation
+    WAVESPEED_API_KEY: str = ""    # Kling 3.0 image-to-video via WaveSpeed
+
+    # Generation providers (pluggable — swap models via config)
+    IMAGE_PROVIDER: str = "stability"       # stability | nanobanana2
+    VIDEO_ANIMATION_PROVIDER: str = "none"  # none | kling_std | kling_pro
 
     # S3
     S3_ENDPOINT_URL: str = ""

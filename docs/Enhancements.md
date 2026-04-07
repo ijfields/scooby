@@ -1,6 +1,6 @@
 # Scooby — Enhancements & Out-of-Scope Items
 
-> **Last updated:** 2026-03-25
+> **Last updated:** 2026-04-01
 
 Items below are explicitly out of scope for the MVP but represent the product roadmap. They are organized by phase and priority.
 
@@ -70,6 +70,89 @@ Instead of composing static images with Ken Burns effects, Remotion stitches Veo
 
 Movie Mode is positioned as a **premium feature** — free tier gets Storyboard Mode, paid tier unlocks Movie Mode. Exact pricing determined after API cost stabilization.
 
+### Alternative Generation Models
+
+> **Research basis:** [Video Analysis — Cinematic Websites](../Video%20Analysis%20-%20This%20AI%20Agent%20Builds%2015K%20Cinematic%20Websites%20on%20Autopilot.md) — RoboNuggets agent pipeline using Nanobanana 2 + Kling 3.0 for cinematic image-to-video.
+
+Additional generation backends to evaluate alongside Stability AI (images) and Veo (video):
+
+| Model | Type | Access | Cost | Notes |
+|-------|------|--------|------|-------|
+| **Nanobanana 2** | Image generation | Google Cloud APIs | Free ($300 credits/Gmail account) | Potential Stability AI replacement for scene images; no third-party reseller needed |
+| **Kling 3.0** | Image-to-video | WaveSpeed API (pay-per-use) | ~$0.05-0.10/clip | Alternative to Veo; no monthly subscription; produces cinematic animated clips from static images |
+| **Nanobanana Pro** | Image generation | Google Cloud APIs | Same free credits | Higher quality variant for premium scenes |
+
+**Nanobanana 2 + Kling 3.0 pipeline** as a Storyboard-to-Movie bridge:
+1. Generate scene image with Nanobanana 2 (free)
+2. Animate scene image into ~8s video clip with Kling 3.0 (~$0.05-0.10)
+3. Compose animated clips with Remotion (existing pipeline)
+
+This hybrid approach could produce more cinematic results than Ken Burns on static images, at a lower cost than full Veo generation — a potential **"Movie Lite" tier** between Storyboard and full Movie Mode.
+
+**Scroll-frame mapping technique** (from same source): Extract individual frames from a generated video and map to scroll position for interactive preview. Could enhance the scene preview experience before final export.
+
+---
+
+### Script Mode (Dialogue-Driven Episodes)
+
+> **Status:** Needs full definition — see Ideas Backlog task below.
+
+Script Mode adds a second **content mode** alongside the existing Narrated mode. Where Narrated mode uses a single narrator voice over images/video, Script Mode features character dialogue — like the vertical drama content on ReelShort, DramaBox, and the 67+ apps documented in [Vertical Drama App Ecosystem](research/Vertical_Drama_App_Ecosystem.md).
+
+**Content mode is independent of visual quality tier:**
+
+|                   | Storyboard (static) | Movie Lite (animated) | Movie (full video) |
+|-------------------|--------------------|-----------------------|--------------------|
+| **Narrated** (VO) | Current MVP        | NB2 + Kling 3.0      | Veo                |
+| **Script** (dialogue) | Images + multi-voice | Animated + multi-voice | Veo + lip-sync |
+
+**Key systems affected (needs detailed design):**
+- Claude scene breakdown prompt → dialogue with speaker labels + emotional direction
+- Character Bible (shared with Movie Mode) → name, appearance, voice mapping
+- Multi-voice TTS → multiple ElevenLabs voices per episode, one per character
+- Caption/subtitle formatting → speaker labels, dialogue vs narration styling
+- Animation prompts → character acting direction for Kling/Veo
+
+**Dependency:** Character Bible (already designed above for Movie Mode). Script Mode and Movie Mode share this component — design together, ship independently.
+
+---
+
+## Phase 1.7: Freestyle Mode (Conversational Series Direction)
+
+> **Prerequisite:** YouTube-to-Series feature (Phase 1.6) shipped.
+
+### The Problem
+
+The YouTube-to-Series flow is rigid: AI plans episodes, user approves or removes. But real creative direction is conversational. In practice, creators say things like "add an epilogue with the book references," "make episode 3 more about the phone call," or "use Roland's actual voice for the closer." The current UI can't handle this.
+
+### The Solution
+
+A chat-based interface where the creator can direct the series through natural language after the initial AI plan:
+
+| Action | Example User Input |
+|--------|-------------------|
+| Add episode | "Add an epilogue with all the book recommendations" |
+| Modify angle | "Make episode 3 focus more on the JFK phone call" |
+| Reorder | "Move the housing episode earlier, it sets up the thesis better" |
+| Swap voice | "Try a different voice on episode 4" |
+| Add source audio | "Use Roland's actual voice for the closing line" |
+| Regenerate asset | "The image on scene 3 is wonky, try again" |
+| Remove episode | "Cut episode 5, it's redundant with episode 2" |
+| Add content | "He references 14 books — can we make a reading list episode?" |
+
+### Implementation Concept
+
+- Chat panel alongside the series plan review UI on the story detail page
+- Each message is processed by Claude with the full series plan as context
+- Claude outputs structured actions (`add_episode`, `modify_episode`, `regenerate_asset`, `extract_source_audio`, etc.)
+- Actions update the plan in real-time; user sees changes immediately
+- Full history of creative decisions preserved as a conversation log
+- Source audio extraction (from original video) available as an action type
+
+### Why This Matters
+
+This emerged organically during the first YouTube-to-Series test. The user conversationally added an epilogue episode, adjusted a voice, fixed a wonky image, and requested the original creator's voice for a closing hook — all actions that the approve/reject UI couldn't handle. Freestyle mode makes the creator a **producer** directing the AI, not just a reviewer accepting or rejecting a plan.
+
 ---
 
 ## Phase 2: Collaborative Writers' Room
@@ -133,6 +216,20 @@ Movie Mode is positioned as a **premium feature** — free tier gets Storyboard 
 - **Ad integration:** Optional mid-roll or pre-roll ad placement for creators
 - **Revenue dashboard:** Track earnings across platforms and monetization methods
 
+### B2B Content Marketplace (Drama App Ecosystem)
+
+> **Research basis:** [Vertical Drama App Ecosystem](research/Vertical_Drama_App_Ecosystem.md) — 67+ apps identified, all licensing from the same shared content pool at ~$50K for 50-60 shows.
+
+The vertical short drama app market has 67+ distribution apps (ReelShort, DramaBox, ShortMax, etc.) that all license the **same low-budget drama catalogs** from production companies. There is no content differentiation — every app shows the same shows. Scooby-generated episodes could break this homogeneity.
+
+- **Writer-to-app pipeline:** Writers create original episodes on Scooby → episodes are packaged for licensing to drama apps
+- **Content licensing API:** Drama apps can browse and license Scooby-created content via API or marketplace
+- **Revenue share:** Platform takes a cut, writers earn royalties per view/license
+- **Quality gate:** Content must pass a quality threshold (resolution, duration, audio quality) to be listed
+- **Exclusivity tiers:** Writers choose non-exclusive (lower fee, wider reach) or exclusive (higher fee, single app)
+- **Catalog packaging:** Bundle episodes into series/collections for bulk licensing deals
+- **Price anchoring:** Drama apps currently pay ~$1,000/show (1/50th of $50K production). Scooby content at $500-800/show with the advantage of **unique, exclusive content** is a compelling value proposition
+
 ---
 
 ## Beyond Phase 3: Multi-Format & Platform Expansion
@@ -181,3 +278,7 @@ These are raw ideas captured for future evaluation:
 - Localization: auto-translate and generate episodes in multiple languages
 - Story templates: pre-built story structures for common genres (romance, thriller, horror, comedy)
 - Episode analytics heatmap: frame-by-frame engagement overlay
+- Research drama content licensing companies (who supplies the 67+ apps?) — potential B2B partnership targets
+- skill.md pipeline pattern: encode Scooby episode pipeline as agent-readable markdown for Claude Code CLI automation and batch processing
+- Cinematic modules for frontend: accordion sliders, reveal text, kinetic text effects for richer scene preview UI
+- **TODO: Flesh out Script Mode definition** — full spec for dialogue-driven episodes: Claude prompt changes, multi-voice TTS mapping, character-voice assignment UI, caption formatting for dialogue vs narration, interaction with Character Bible and each visual quality tier
