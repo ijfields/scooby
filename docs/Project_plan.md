@@ -1,8 +1,8 @@
 # Scooby — Phased Project Plan
 
-> **Version:** 0.5
-> **Last updated:** 2026-03-31
-> **Focus:** YouTube-to-Series feature — new input path for content repurposing
+> **Version:** 0.6
+> **Last updated:** 2026-04-07
+> **Focus:** Consolidation — YouTube-to-Series + Pluggable Generation Providers shipped, tests added
 
 ---
 
@@ -17,9 +17,9 @@
 | 1.5 AI Scene Breakdown | **Done** | Claude integration, Celery task, polling UI |
 | 1.6 Scene Editor UI | **Done** | Beat labels, inline edit, reorder, delete, preview link |
 | 1.7 Style & Voice Selection | **Done** | Visual/voice/music presets, duration toggle |
-| 1.8 Video Generation Pipeline | **Done** | Images (Stability AI) + voiceovers (ElevenLabs), Celery orchestration |
+| 1.8 Video Generation Pipeline | **Done** | Pluggable provider system: Stability AI (default) + Nanobanana 2 images, Kling 3.0 animation; Celery orchestration |
 | 1.9 Preview & Export | **Partial** | Scene-by-scene slideshow preview working; Remotion video render not started |
-| 1.10 Testing & Polish | **Not started** | E2E tests, error states, accessibility, mobile |
+| 1.10 Testing & Polish | **Partial** | 34 automated unit tests (providers, pipeline, YouTube import); Testing Checklist doc; E2E tests not started |
 
 ### Recent Additions (Session 004)
 
@@ -27,6 +27,15 @@
 - `GET /episodes/{id}/scenes-with-assets` and `GET /episodes/by-story/{story_id}` endpoints
 - Story detail page shows existing episodes (no more dead-end workflow)
 - UI polish across all pages
+
+### Recent Additions (Sessions 005-006)
+
+- **YouTube-to-Series:** Second input path — paste a YouTube URL, AI plans a multi-episode series from the transcript. Full pipeline: transcript extraction → Claude series planning → plan review UI → approve → episode generation. Attribution system for YouTube-sourced content.
+- **Pluggable Generation Providers:** Provider registry pattern for image + animation backends. Nanobanana 2 (Google Gemini 3.1 Flash) as alternative image provider. Kling 3.0 image-to-video via WaveSpeed API for scene animation. Swap models via env vars.
+- **Testing:** 34 automated unit tests covering providers, pipeline integration, and YouTube import. Testing Checklist document with manual + automated procedures.
+- **Consolidation:** Feature branches merged to master, stale branches deleted. All work on single `master` branch.
+- **Research:** 67+ vertical drama apps cataloged, market economics analyzed ($50K content licensing vs Scooby's AI-generated content). Video analyses of RoboNuggets cinematic websites pipeline.
+- **Enhancements doc expanded:** Movie Lite tier, Script Mode (dialogue-driven episodes), Freestyle Mode (conversational series direction), B2B content marketplace concept.
 
 ---
 

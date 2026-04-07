@@ -1649,6 +1649,10 @@ The following table breaks down the estimated cost for a typical episode with 6 
 | `CELERY_RESULT_BACKEND` | Celery result backend | `redis://localhost:6379/1` |
 | `MAX_EPISODES_PER_USER_DAY` | Rate limit: episodes per user per day | `10` |
 | `MAX_STORY_LENGTH_CHARS` | Maximum story input length | `5000` |
+| `GOOGLE_API_KEY` | Google Gemini API key (Nanobanana 2 images) | `AIza...` |
+| `WAVESPEED_API_KEY` | WaveSpeed API key (Kling 3.0 animation) | `ws-...` |
+| `IMAGE_PROVIDER` | Image generation backend | `stability` (default) or `nanobanana2` |
+| `VIDEO_ANIMATION_PROVIDER` | Video animation backend | `none` (default), `kling_std`, or `kling_pro` |
 
 ### Example `.env.example` File
 
@@ -1678,6 +1682,12 @@ CELERY_RESULT_BACKEND=redis://localhost:6379/1
 ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 STABILITY_API_KEY=sk-your-stability-key-here
 ELEVENLABS_API_KEY=xi-your-elevenlabs-key-here
+
+# ---------- Generation Providers (optional — new models) ----------
+GOOGLE_API_KEY=                       # Nanobanana 2 image generation (get at ai.google.dev)
+WAVESPEED_API_KEY=                    # Kling 3.0 animation (get at wavespeed.ai)
+IMAGE_PROVIDER=stability              # stability | nanobanana2
+VIDEO_ANIMATION_PROVIDER=none         # none | kling_std | kling_pro
 
 # ---------- S3-Compatible Storage ----------
 S3_ENDPOINT_URL=https://your-account-id.r2.cloudflarestorage.com

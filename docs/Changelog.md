@@ -6,9 +6,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
-## [0.5.0] — 2026-03-31 (In Progress)
+## [0.5.0] — 2026-04-07
 
 ### [ADDED]
+
+**YouTube-to-Series Import:**
 - YouTube-to-Series input path: paste a YouTube URL to create a multi-episode visual series
 - AI Series Planner: Claude analyzes full video transcript and plans 3-8 standalone episodes with dramatic structure
 - YouTube transcript extraction service with auto-caption cleanup
@@ -23,11 +25,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 - Automatic non-removable attribution on all YouTube-sourced episodes (preview, share, MP4 end card)
 - Source badge on stories list (YouTube vs original)
 
+**Pluggable Generation Providers:**
+- Provider registry pattern for image generation — swap AI models via `IMAGE_PROVIDER` env var
+- Nanobanana 2 (Gemini 3.1 Flash) image provider via Google API ($0.034-0.067/image)
+- Kling 3.0 image-to-video animation provider via WaveSpeed API ($0.35-1.20/clip)
+- Animation provider registry — swap via `VIDEO_ANIMATION_PROVIDER` env var
+- `generate_animations_task` in pipeline (between images and voiceover)
+- `generation_tier` column on Episode model (standard/enhanced/movie_lite/movie/movie_pro)
+- Phase 0 test scripts: `scripts/test_nanobanana2.py`, `scripts/test_kling_animation.py`, `scripts/compare_generations.py`
+
+**Testing:**
+- 34 automated unit tests (all mocked, no API keys needed)
+- Testing checklist document (`docs/Testing_Checklist.md`)
+- Tests cover: image providers, animation providers, pipeline integration, YouTube import
+
 ### [CHANGED]
 - PRD updated to v0.2 with two input paths, content repurposer persona, and competitive differentiation
-- Project plan updated to v0.5 with YouTube-to-Series sprint
+- Project plan updated to v0.6 with consolidated feature work
 - Marketing plan updated with content repurposing positioning
 - Overview deck updated with "Canva with multi-use" pitch
+- Pipeline task uses pluggable provider registry instead of hardcoded Stability AI
+- Enhancements doc expanded with Movie Lite tier, Script Mode, Freestyle Mode concepts
+- Feature branches consolidated onto master (feat/youtube-to-series + feat/pluggable-generation-providers deleted)
 
 ---
 
