@@ -7,6 +7,10 @@
 .env.local
 .env.*.local
 
+# ---------- Local scratch / eval output ----------
+.firecrawl/
+test_generations/
+
 # ---------- Python ----------
 __pycache__/
 *.py[cod]
