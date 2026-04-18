@@ -38,8 +38,11 @@ def log_result(row: dict) -> None:
     """Append one run to the results CSV, writing header if new."""
     os.makedirs(os.path.dirname(RESULTS_CSV), exist_ok=True)
     new_file = not os.path.isfile(RESULTS_CSV)
+    # Auto-fill timestamp unless caller provided one
+    if not row.get("timestamp"):
+        row["timestamp"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # Normalize to exactly FIELDS columns, filling missing keys with ""
     row = {k: row.get(k, "") for k in FIELDS}
-    row.setdefault("timestamp", datetime.now(timezone.utc).isoformat(timespec="seconds"))
     with open(RESULTS_CSV, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         if new_file:

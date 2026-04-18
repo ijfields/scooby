@@ -74,7 +74,9 @@ Per-second cost so far (credits ÷ duration):
 |---|---|---|
 | Kling 2.6 (i2v, 5s) | 0.65 | `kling_2.6_5s.mp4` |
 | Kling V3 (t2v, 5s) | 0.80 | `kling_v3_5s.mp4` |
+| Vidu Q3 Pro (i2v, 8s) | 0.90 | `vidu_q3_pro_8s.mp4` |
 | Sora 2 Pro (t2v, 8s) | 1.68 | `sora_2_pro_8s.mp4` |
+| Sora 2 Pro (i2v, 8s) | — | **blocked by moderation** (see below) |
 
 **Back-of-envelope for a full Scooby episode** (8 scenes × 5s each = 40s
 of output):
@@ -83,7 +85,8 @@ of output):
 |---|---|---|
 | Kling 2.6 | ~26 | cheap tier |
 | Kling V3 | ~32 | mid tier |
-| Sora 2 Pro | ~67 | premium |
+| Vidu Q3 Pro | ~36 | mid tier w/ audio |
+| Sora 2 Pro | ~67 | premium (t2v only — see finding below) |
 
 Compare against TopView's Pro subscription credit allowance to compute
 break-even episodes/month.
@@ -112,19 +115,49 @@ One row per model. Fill qualitative notes after watching each MP4.
 - [ ] Drama aesthetic match:
 - [ ] Would I ship this in an episode?
 
-### Vidu Q3 Pro ⏳ (pending)
+### Vidu Q3 Pro ✅
 
-_Not yet run. Command:_
-```
-python scripts/test_topview_image2video.py "C:\Data\Cousin Ingrid\Git Hub\scooby\test_scene.png" --model vidu_q3_pro
-```
+- **Task ID:** `a2626eed2afb41be9d9be4cd1bf595fb`
+- **Output:** `test_generations/topview/vidu_q3_pro_8s.mp4`
+- **Dims:** 724x1268 (9:16)
+- **Duration:** 8s with native audio
+- **Gen time:** 150s
+- **Credits:** 7.2
+- **Prompt:** "Slow cinematic push in, warm amber light flickers, atmospheric dust floats. Moody drama."
 
-### Sora 2 Pro ⏳ (pending — i2v)
+**Qualitative notes** (fill in after watching):
 
-_Not yet run. Command:_
-```
-python scripts/test_topview_image2video.py "C:\Data\Cousin Ingrid\Git Hub\scooby\test_scene.png" --model sora_2_pro
-```
+- [ ] Motion quality:
+- [ ] Preserves character/setting from source image?
+- [ ] Audio quality:
+- [ ] Drama aesthetic vs Kling 2.6:
+- [ ] 8s long enough to feel like a real scene beat?
+
+### Sora 2 Pro ❌ (blocked by moderation)
+
+- **Task ID:** `c2719978cca04b3aa99b63f242ba21e3`
+- **Status:** `failed` after 320s polling
+- **Error:** "Your request was blocked by our moderation system. credits have been refunded"
+
+**Finding — significant for Scooby:**
+
+Sora 2 Pro's model card states it "does not support generating realistic
+humans." The same kitchen-scene prompt worked in **t2v** (where the model
+interprets loosely), but **i2v** on a source image actually containing
+a person's face is flagged by moderation.
+
+**Implication:** Sora 2 Pro is effectively unusable for Scooby's default
+i2v pipeline, because almost every story scene involves a character.
+It remains viable for:
+
+- **Freestyle / Text2Video mode** (proven: the t2v run succeeded)
+- **Scene beats with no humans** — establishing shots, objects, locations
+
+**Workaround if we still want Sora quality for character scenes:** use
+`Sora 2 Pro` only on non-character scenes (e.g. environment establishing
+shots), and a character-safe model (Kling 2.6, Vidu Q3 Pro) for the rest.
+This adds routing logic to the provider registry — not worth it unless
+Sora's output is *dramatically* better in the t2v comparison.
 
 ---
 
@@ -196,17 +229,33 @@ Same scene as a prompt, no source image.
 
 ## Recommendation (updated live)
 
-**As of 2026-04-17 (1 i2v + 2 t2v runs done):** Too early to recommend.
-Upload flow + polling confirmed working, credit costs are in a reasonable
-range for an indie drama platform, 9:16 output is genuinely 9:16. Need
-visual review of the 3 MP4s and 2 more runs before deciding whether to
-add TopView to the provider registry.
+**As of 2026-04-18 (3 i2v + 2 t2v runs done — 1 blocked):**
+
+Infra all works: upload, submit, poll, credit tracking. 9:16 output is
+genuine 9:16 across all working models. Credit costs (~26–36 per episode
+for viable models) are in an acceptable range for an indie platform.
+
+**The Sora 2 Pro moderation block is the headline finding.** Scooby's
+value prop is character-driven drama, so any model that rejects realistic
+humans on i2v is a non-starter for the default pipeline. This narrows
+the practical shortlist for Scooby to:
+
+- **Kling 2.6** (cheap tier, audio, 5/10s) — leading candidate
+- **Vidu Q3 Pro** (mid tier, audio, 1-16s) — flexible duration is a plus
+- **Kling V3 t2v** (for Freestyle Mode, not default flow)
 
 **Next steps:**
 
-1. Run the two pending i2v tests (Vidu Q3 Pro, Sora 2 Pro) — **~17 more credits.**
-2. Watch all 5 MP4s side-by-side, fill in the `[ ]` notes above.
-3. Update the Decision Matrix + Recommendation.
-4. If TopView wins on Scooby's criteria: add `topview_kling` /
-   `topview_sora` entries to `app/services/generation/providers.py`
-   (animation provider registry) and expose in `generation_tier`.
+1. Watch the 4 viable MP4s side-by-side, fill in the `[ ]` notes above.
+2. Based on qualitative review, pick the winner between Kling 2.6 and
+   Vidu Q3 Pro for the default i2v tier.
+3. Update the Decision Matrix below with observations vs Kling 3.0
+   WaveSpeed (already built — need to generate a comparable sample).
+4. Decide: **integrate TopView as a provider?** If yes, add
+   `topview_kling_2_6` and `topview_vidu_q3_pro` entries to
+   `app/services/generation/providers.py` and expose via
+   `generation_tier` (standard / enhanced).
+5. **Optional further runs:** try `Topview Pro` or `Topview Lite` (their
+   own models, potentially cheapest), or re-test Sora 2 Pro i2v on a
+   non-human scene (pure environment) to confirm the moderation trigger
+   is specifically the human face.
