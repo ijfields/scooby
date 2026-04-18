@@ -214,8 +214,9 @@ print()
 
 results = []
 for i, config in enumerate(TEST_MODELS):
+    res_str = f"{config['resolution']}p" if "resolution" in config else "default-res"
     print(f"[{i + 1}/{len(TEST_MODELS)}] {config['name']} — {config['model']} "
-          f"({config['duration']}s, {config['resolution']}p, sound={config['sound']})")
+          f"({config['duration']}s, {res_str}, sound={config['sound']})")
     print(f"  Prompt: {config['prompt'][:80]}...")
 
     try:
