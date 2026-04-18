@@ -92,6 +92,15 @@ TEST_MODELS = [
         "sound": "off",  # no audio
         "prompt": "Subtle camera push in, gentle motion, cinematic narrative drama, film grain.",
     },
+    {
+        "name": "seedance_1.0_pro_fast",
+        "model": "Seedance 1.0 Pro Fast",
+        # aspectRatio determined by image
+        "resolution": 720,
+        "duration": 10,  # supported: 5, 10, 12
+        "sound": "off",  # Seedance 1.0 has no native audio
+        "prompt": "Slow dolly in, cinematic handheld feel, warm key light drifts across the subject, film grain, moody drama.",
+    },
 ]
 
 if args.model:

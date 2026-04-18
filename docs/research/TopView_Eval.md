@@ -159,6 +159,22 @@ shots), and a character-safe model (Kling 2.6, Vidu Q3 Pro) for the rest.
 This adds routing logic to the provider registry — not worth it unless
 Sora's output is *dramatically* better in the t2v comparison.
 
+### Seedance 1.0 Pro Fast ⏳ (pending)
+
+_ByteDance's video model, Fast tier. Single Image mode, no native audio._
+
+_Command:_
+```
+python scripts/test_topview_image2video.py "C:\Data\Cousin Ingrid\Git Hub\scooby\test_scene.png" --model seedance_1.0_pro_fast
+```
+
+**Qualitative notes** (fill in after watching):
+
+- [ ] Motion quality (ByteDance drama aesthetic vs Kling/Vidu):
+- [ ] Preserves character/setting from source image?
+- [ ] 10s feels like a usable scene beat?
+- [ ] Worth adding as a "no-audio fast tier" alongside Kling 2.6?
+
 ---
 
 ## Results — Text-to-Video
@@ -197,6 +213,23 @@ Same scene as a prompt, no source image.
 - [ ] Motion realism (Sora's known strength):
 - [ ] Worth ~3× Kling V3's credit cost?
 - [ ] Would we ever use it for narration scenes (no audio is a limit)?
+
+### Seedance 1.5 pro ⏳ (pending)
+
+_ByteDance's flagship. 9:16 native, native audio. Only usable in t2v for
+Scooby (1.5 pro i2v requires first+last frame pair)._
+
+_Command:_
+```
+python scripts/test_topview_text2video.py --model seedance_1.5_pro
+```
+
+**Qualitative notes:**
+
+- [ ] Scene interpretation quality:
+- [ ] Audio — does Seedance generate better ambient/dialogue than Kling V3?
+- [ ] 8s pacing vs 5s Kling V3:
+- [ ] If Seedance 1.5 wins here, worth wiring t2v into Freestyle Mode?
 
 ---
 

@@ -88,6 +88,14 @@ TEST_MODELS = [
         "duration": 5,
         "sound": "on",
     },
+    {
+        "name": "seedance_1.5_pro",
+        "model": "Seedance 1.5 pro",
+        "aspectRatio": "9:16",
+        "resolution": 720,
+        "duration": 8,
+        "sound": "on",  # native audio available on 1.5 pro
+    },
 ]
 
 if args.model:
