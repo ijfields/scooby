@@ -22,7 +22,8 @@ import os
 from datetime import datetime
 
 RESULTS_CSV = os.path.join("test_generations", "topview_results.csv")
-OUTPUT_HTML = os.path.join("test_generations", "partner_review.html")
+# Named index.html so Netlify (or any static host) serves it at the site root.
+OUTPUT_HTML = os.path.join("test_generations", "index.html")
 
 # Human-readable labels, grouped by kind. Keep technical model names in
 # small text below for reference but lead with the partner-friendly summary.
