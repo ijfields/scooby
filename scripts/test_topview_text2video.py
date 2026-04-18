@@ -32,6 +32,9 @@ try:
 except ImportError:
     pass
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _topview_results import log_result  # noqa: E402
+
 api_key = os.environ.get("TOPVIEW_API_KEY")
 uid = os.environ.get("TOPVIEW_UID")
 if not api_key or not uid:
@@ -174,6 +177,7 @@ for i, config in enumerate(TEST_MODELS):
     print(f"[{i + 1}/{len(TEST_MODELS)}] {config['name']} — {config['model']} "
           f"({config['duration']}s, {config['resolution']}p, sound={config['sound']})")
 
+    task_id = ""
     try:
         task_id = submit_task(config)
         print(f"  Task ID: {task_id}")
@@ -191,6 +195,23 @@ for i, config in enumerate(TEST_MODELS):
             dims = f"{result['width']}x{result['height']}" if result.get("width") else "?"
             print(f"  Saved: {path} ({file_size / 1024:.0f} KB, {dims}, "
                   f"{result['time']}s, credit={result['credit']})")
+            log_result({
+                "kind": "t2v",
+                "model_name": config["name"],
+                "model_display": config["model"],
+                "duration_s": config["duration"],
+                "resolution": config["resolution"],
+                "aspect_ratio": config["aspectRatio"],
+                "sound": config["sound"],
+                "prompt": SCENE_PROMPT,
+                "task_id": task_id,
+                "status": "ok",
+                "gen_time_s": result["time"],
+                "credits": result["credit"],
+                "dims": dims,
+                "file_size_kb": round(file_size / 1024),
+                "output_path": path,
+            })
             results.append({
                 "name": config["name"],
                 "status": "ok",
@@ -208,14 +229,38 @@ for i, config in enumerate(TEST_MODELS):
                 "time": result["time"],
                 "error": result.get("error"),
             })
+            log_result({
+                "kind": "t2v",
+                "model_name": config["name"],
+                "model_display": config["model"],
+                "duration_s": config["duration"],
+                "resolution": config["resolution"],
+                "aspect_ratio": config["aspectRatio"],
+                "sound": config["sound"],
+                "prompt": SCENE_PROMPT,
+                "task_id": task_id,
+                "status": result["status"],
+                "gen_time_s": result["time"],
+                "error": str(result.get("error", ""))[:500],
+            })
 
     except requests.HTTPError as e:
         body = e.response.text[:300] if e.response is not None else ""
         print(f"  HTTP ERROR: {e} — {body}")
         results.append({"name": config["name"], "status": "http_error", "error": str(e)})
+        log_result({
+            "kind": "t2v", "model_name": config["name"], "model_display": config["model"],
+            "prompt": SCENE_PROMPT, "task_id": task_id,
+            "status": "http_error", "error": f"{e} — {body}"[:500],
+        })
     except Exception as e:
         print(f"  ERROR: {e}")
         results.append({"name": config["name"], "status": "error", "error": str(e)})
+        log_result({
+            "kind": "t2v", "model_name": config["name"], "model_display": config["model"],
+            "prompt": SCENE_PROMPT, "task_id": task_id,
+            "status": "error", "error": str(e)[:500],
+        })
 
     print()
 
