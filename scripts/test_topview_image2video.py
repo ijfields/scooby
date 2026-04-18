@@ -60,16 +60,25 @@ HEADERS = {
 }
 
 # 9:16 vertical drama — same aspect + duration range Scooby scenes target.
-# Picked to span price/quality: cheap/fast, narrative-strong, audio-native.
+# All Single Image mode (Scooby has one image per scene, not a start/end pair).
+# Picked to span price/quality: cheap/fast, audio-native, premium.
 TEST_MODELS = [
     {
-        "name": "veo_3.1_fast",
-        "model": "Veo 3.1 Fast",
+        "name": "kling_2.6",
+        "model": "Kling 2.6",
+        # aspectRatio determined by image; omit (pass a 9:16 source)
+        "duration": 5,
+        "sound": "on",  # native audio
+        "prompt": "Emotional close-up, subtle breathing motion, soft light shift from warm to cool, intimate moment.",
+    },
+    {
+        "name": "vidu_q3_pro",
+        "model": "Vidu Q3 Pro",
         "aspectRatio": "9:16",
         "resolution": 720,
         "duration": 8,
         "sound": "on",  # native audio
-        "prompt": "Slow cinematic zoom in, warm amber light flickers, atmospheric dust floats. Moody drama.",
+        "prompt": "Slow cinematic push in, warm amber light flickers, atmospheric dust floats. Moody drama.",
     },
     {
         "name": "sora_2_pro",
@@ -79,15 +88,6 @@ TEST_MODELS = [
         "duration": 8,
         "sound": "off",  # no audio
         "prompt": "Subtle camera push in, gentle motion, cinematic narrative drama, film grain.",
-    },
-    {
-        "name": "kling_v3",
-        "model": "Kling V3",
-        # aspectRatio determined by image; omit
-        "resolution": 720,
-        "duration": 5,
-        "sound": "on",  # native audio
-        "prompt": "Emotional close-up, subtle breathing motion, soft light shift from warm to cool, intimate moment.",
     },
 ]
 
@@ -142,13 +142,14 @@ def submit_task(file_id: str, config: dict) -> str:
         "model": config["model"],
         "firstFrameFileId": file_id,
         "prompt": config["prompt"],
-        "resolution": config["resolution"],
         "duration": config["duration"],
         "sound": config["sound"],
         "generatingCount": 1,
     }
     if "aspectRatio" in config:
         body["aspectRatio"] = config["aspectRatio"]
+    if "resolution" in config:
+        body["resolution"] = config["resolution"]
 
     resp = requests.post(
         f"{BASE_URL}/v2/common_task/image2video/task/submit",
