@@ -54,15 +54,15 @@ FRIENDLY = {
     },
     # t2v variants — same models, different mode
     "kling_v3": {
-        "title": "Option E — Cheap freestyle",
+        "title": "Option E — Cheap tier, with sound",
         "subtitle": "Kling V3 (prompt only)",
-        "blurb": "Cheap freestyle tier with sound.",
+        "blurb": "Budget option for the prompt-only path. Includes sound.",
         "tier_badge": "💰 budget",
     },
     "sora_2_pro": {
-        "title": "Option F — Premium freestyle",
+        "title": "Option F — Premium tier, no sound",
         "subtitle": "Sora 2 Pro (prompt only)",
-        "blurb": "Most expensive. No sound. Known for realistic motion.",
+        "blurb": "Most expensive of the bunch. No sound. Known for realistic motion.",
         "tier_badge": "💰💰💰 premium",
     },
     "seedance_1.5_pro": {

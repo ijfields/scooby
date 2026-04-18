@@ -6,6 +6,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.5.1] — 2026-04-18
+
+### [ADDED]
+
+**TopView AI — Phase 0 evaluation:**
+- Evaluation scripts: `scripts/test_topview_image2video.py` and `scripts/test_topview_text2video.py` for running TopView's Image-to-Video V2 and Text-to-Video endpoints against Scooby's 9:16 vertical drama use case
+- Shared CSV logging helper `scripts/_topview_results.py` — auto-appends every run (ok / failed / error) to `test_generations/topview_results.csv` with model, credits, gen time, dims, output path
+- `TOPVIEW_API_KEY` + `TOPVIEW_UID` added to `.env.example` (Pro plan required)
+- Partner review page generator: `scripts/build_topview_review_page.py` renders a single-file `test_generations/index.html` in Scooby's brand styling, grouping clips by i2v/t2v with plain-language labels and per-clip feedback textareas
+- Living evaluation report at `docs/research/TopView_Eval.md` — methodology, credit math, per-model qualitative checklists, decision matrix, tier recommendations
+- Review deployed to https://scooby-video-review.netlify.app for non-technical partner feedback
+
+**Runs completed (7 total, 6 successful):**
+- Image-to-Video: Kling 2.6 (3.25 cr), Vidu Q3 Pro (7.2 cr), Seedance 1.0 Pro Fast (0.7 cr), Sora 2 Pro (blocked by moderation on human faces)
+- Text-to-Video: Kling V3 (4.0 cr), Sora 2 Pro (13.44 cr), Seedance 1.5 pro (2.0 cr)
+
+**Key findings:**
+- Seedance 1.0 Pro Fast is ~10× cheaper per second than Kling 2.6 (0.07 vs 0.65 credits/sec) — if quality holds up in partner review, it becomes the budget-tier default
+- Sora 2 Pro i2v rejects any source image containing a realistic human, ruling it out for Scooby's default character-driven pipeline (still viable for Freestyle t2v mode and environment-only shots)
+- All working models produce genuine 9:16 vertical output
+
+### [CHANGED]
+- `.gitignore` adds `.firecrawl/` (local scrape cache) and `test_generations/` (eval output and generated videos)
+
+---
+
 ## [0.5.0] — 2026-04-07
 
 ### [ADDED]

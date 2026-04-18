@@ -5,8 +5,11 @@
 > generation stage — either as an alternative/replacement for Remotion
 > (still unbuilt) or as a pluggable animation provider alongside Kling 3.0.
 > **Eval scripts:** `scripts/test_topview_image2video.py`, `scripts/test_topview_text2video.py`
+> **Review page builder:** `scripts/build_topview_review_page.py`
 > **Raw data:** `test_generations/topview_results.csv` (local, gitignored)
-> **Status:** In progress
+> **Status:** Phase 0 complete — awaiting non-technical partner review
+> **Partner review URL:** https://scooby-video-review.netlify.app
+> **Runs:** 6 successful (3 i2v + 3 t2v) + 1 moderation block
 
 ---
 
@@ -38,8 +41,8 @@ Two scripts drive the eval:
   image, animate it. This matches Scooby's default flow (image stage
   preserves scene-preview UX for non-technical writers).
 - **`test_topview_text2video.py --model <name>`** — skip the image stage
-  entirely, go prompt → video. Relevant for the future Freestyle Mode
-  (see [Enhancements.md](../Enhancements.md)).
+  entirely, go prompt → video. A cheaper/faster path that trades away
+  the scene-preview UX; potentially useful for a future "express" tier.
 
 **Test input:**
 - **Image** (i2v): `test_scene.png` — a Scooby-style vertical scene, kitchen
@@ -150,7 +153,7 @@ a person's face is flagged by moderation.
 i2v pipeline, because almost every story scene involves a character.
 It remains viable for:
 
-- **Freestyle / Text2Video mode** (proven: the t2v run succeeded)
+- **Text-to-Video mode** (proven: the t2v run succeeded)
 - **Scene beats with no humans** — establishing shots, objects, locations
 
 **Workaround if we still want Sora quality for character scenes:** use
@@ -159,21 +162,27 @@ shots), and a character-safe model (Kling 2.6, Vidu Q3 Pro) for the rest.
 This adds routing logic to the provider registry — not worth it unless
 Sora's output is *dramatically* better in the t2v comparison.
 
-### Seedance 1.0 Pro Fast ⏳ (pending)
+### Seedance 1.0 Pro Fast ✅
 
-_ByteDance's video model, Fast tier. Single Image mode, no native audio._
+- **Task ID:** `2a499c3bd3f242d581f84fc4e5f19054`
+- **Output:** `test_generations/topview/seedance_1.0_pro_fast_10s.mp4`
+- **Dims:** 704x1248 (9:16)
+- **Duration:** 10s, no audio
+- **Gen time:** 70s (fastest of the i2v runs)
+- **Credits:** 0.7 — **roughly 10× cheaper per second than Kling 2.6**
+- **Prompt:** "Slow dolly in, cinematic handheld feel, warm key light drifts across the subject, film grain, moody drama."
 
-_Command:_
-```
-python scripts/test_topview_image2video.py "C:\Data\Cousin Ingrid\Git Hub\scooby\test_scene.png" --model seedance_1.0_pro_fast
-```
+**Headline finding:** at 0.07 credits/sec, this is dramatically cheaper
+than every other model tested. For an 8-scene × 5s episode, Seedance Fast
+costs ~3 credits vs Kling 2.6's ~26. If partner review finds the quality
+acceptable, this changes the unit economics of Scooby's video pipeline.
 
-**Qualitative notes** (fill in after watching):
+**Qualitative notes** (fill in after partner review):
 
 - [ ] Motion quality (ByteDance drama aesthetic vs Kling/Vidu):
 - [ ] Preserves character/setting from source image?
 - [ ] 10s feels like a usable scene beat?
-- [ ] Worth adding as a "no-audio fast tier" alongside Kling 2.6?
+- [ ] Worth making this the default with music/voiceover layered on top?
 
 ---
 
@@ -214,22 +223,25 @@ Same scene as a prompt, no source image.
 - [ ] Worth ~3× Kling V3's credit cost?
 - [ ] Would we ever use it for narration scenes (no audio is a limit)?
 
-### Seedance 1.5 pro ⏳ (pending)
+### Seedance 1.5 pro ✅
 
-_ByteDance's flagship. 9:16 native, native audio. Only usable in t2v for
-Scooby (1.5 pro i2v requires first+last frame pair)._
+- **Task ID:** `ced9a4a7fc0f4636a41a19edbe303755`
+- **Output:** `test_generations/topview_t2v/seedance_1.5_pro_8s.mp4`
+- **Dims:** 720x1280 (9:16)
+- **Duration:** 8s with native audio
+- **Gen time:** 80s
+- **Credits:** 2.0 — **cheaper and faster than Kling V3** (which cost 4.0 for 5s)
 
-_Command:_
-```
-python scripts/test_topview_text2video.py --model seedance_1.5_pro
-```
+**Note:** Seedance 1.5 pro i2v requires first+last frame pair (same
+constraint as Kling V3 and Veo 3.1), so it's only usable via t2v for
+Scooby's single-image flow.
 
-**Qualitative notes:**
+**Qualitative notes** (fill in after partner review):
 
 - [ ] Scene interpretation quality:
 - [ ] Audio — does Seedance generate better ambient/dialogue than Kling V3?
 - [ ] 8s pacing vs 5s Kling V3:
-- [ ] If Seedance 1.5 wins here, worth wiring t2v into Freestyle Mode?
+- [ ] Strong enough to be the prompt-direct (t2v) default?
 
 ---
 
@@ -262,33 +274,50 @@ python scripts/test_topview_text2video.py --model seedance_1.5_pro
 
 ## Recommendation (updated live)
 
-**As of 2026-04-18 (3 i2v + 2 t2v runs done — 1 blocked):**
+**As of 2026-04-18 (3 i2v + 3 t2v runs complete, 1 i2v blocked):**
 
-Infra all works: upload, submit, poll, credit tracking. 9:16 output is
-genuine 9:16 across all working models. Credit costs (~26–36 per episode
-for viable models) are in an acceptable range for an indie platform.
+Phase 0 infrastructure shipped. 9:16 output is genuine 9:16 across every
+working model. Per-episode credit costs range from ~3 (Seedance Fast) to
+~67 (Sora 2 Pro), giving a real cost/quality ladder to choose from.
 
-**The Sora 2 Pro moderation block is the headline finding.** Scooby's
-value prop is character-driven drama, so any model that rejects realistic
-humans on i2v is a non-starter for the default pipeline. This narrows
-the practical shortlist for Scooby to:
+### Two headline findings
 
-- **Kling 2.6** (cheap tier, audio, 5/10s) — leading candidate
-- **Vidu Q3 Pro** (mid tier, audio, 1-16s) — flexible duration is a plus
-- **Kling V3 t2v** (for Freestyle Mode, not default flow)
+1. **Sora 2 Pro i2v is blocked by moderation** on any source image with
+   a human face. Scooby's stories are character-driven, so Sora 2 Pro is
+   out for the default i2v pipeline. Still viable for the t2v prompt-direct
+   path and environment-only scenes.
 
-**Next steps:**
+2. **Seedance 1.0 Pro Fast is an economic outlier** at 0.07 credits/sec
+   — roughly 10× cheaper than Kling 2.6. If partner review confirms the
+   quality is usable (even without native audio, which we can layer on via
+   ElevenLabs + music), this becomes the obvious default tier.
 
-1. Watch the 4 viable MP4s side-by-side, fill in the `[ ]` notes above.
-2. Based on qualitative review, pick the winner between Kling 2.6 and
-   Vidu Q3 Pro for the default i2v tier.
-3. Update the Decision Matrix below with observations vs Kling 3.0
-   WaveSpeed (already built — need to generate a comparable sample).
-4. Decide: **integrate TopView as a provider?** If yes, add
-   `topview_kling_2_6` and `topview_vidu_q3_pro` entries to
-   `app/services/generation/providers.py` and expose via
-   `generation_tier` (standard / enhanced).
-5. **Optional further runs:** try `Topview Pro` or `Topview Lite` (their
-   own models, potentially cheapest), or re-test Sora 2 Pro i2v on a
-   non-human scene (pure environment) to confirm the moderation trigger
-   is specifically the human face.
+### Current tier recommendation (pending partner review)
+
+| Tier | Default pipeline (i2v) | Prompt-direct mode (t2v) |
+|---|---|---|
+| **Budget** | Seedance Fast (~3 cr/ep) | Seedance 1.5 pro (~10 cr/ep) |
+| **Mid** | Kling 2.6 (~26 cr/ep) | Kling V3 (~32 cr/ep) |
+| **Premium** | Vidu Q3 Pro (~36 cr/ep) | Sora 2 Pro (~67 cr/ep) |
+
+### Next steps
+
+1. **Partner review** at https://scooby-video-review.netlify.app — get
+   gut-feel feedback on which videos feel like drama vs marketing-ad.
+2. **Fill the `[ ]` qualitative checklists** above with partner feedback
+   and your own viewing notes.
+3. **Commit to a Budget + Mid + Premium tier** per mode. Update the
+   Decision Matrix below with the winners.
+4. **Generate a comparable Kling 3.0 / WaveSpeed sample** to fairly
+   compare against the current `kling_std` animation provider before
+   deciding whether TopView replaces or augments it.
+5. **If TopView wins any tier:** add provider registry entries to
+   `backend/app/services/generation/providers.py` and expose the new
+   options via `generation_tier` on the Episode model.
+6. **Optional further runs** (post-partner-review, if they reveal gaps):
+   - `Topview Pro` / `Topview Lite` (TopView's own models, likely
+     cheapest on their side)
+   - Seedance 1.5 pro on an environment-only image to confirm single-image
+     bypass works for non-human scenes
+   - Veo 3.1 Fast with first=end frame as a workaround — highest audio
+     quality tier if it renders without weird artifacts
