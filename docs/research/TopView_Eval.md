@@ -4,12 +4,12 @@
 > **Purpose:** Decide whether TopView AI is a good fit for Scooby's video
 > generation stage — either as an alternative/replacement for Remotion
 > (still unbuilt) or as a pluggable animation provider alongside Kling 3.0.
-> **Eval scripts:** `scripts/test_topview_image2video.py`, `scripts/test_topview_text2video.py`
+> **Eval scripts:** `scripts/test_topview_image2video.py`, `scripts/test_topview_text2video.py`, `scripts/test_topview_omni_reference.py`
 > **Review page builder:** `scripts/build_topview_review_page.py`
 > **Raw data:** `test_generations/topview_results.csv` (local, gitignored)
-> **Status:** Phase 0 complete — awaiting non-technical partner review
+> **Status:** Phase 0 partner review in progress; Seedance 2.0 eval queued
 > **Partner review URL:** https://scooby-video-review.netlify.app
-> **Runs:** 6 successful (3 i2v + 3 t2v) + 1 moderation block
+> **Runs:** 6 successful (3 i2v + 3 t2v) + 1 moderation block. 2 Seedance 2.0 runs pending via Omni Reference endpoint.
 
 ---
 
@@ -242,6 +242,67 @@ Scooby's single-image flow.
 - [ ] Audio — does Seedance generate better ambient/dialogue than Kling V3?
 - [ ] 8s pacing vs 5s Kling V3:
 - [ ] Strong enough to be the prompt-direct (t2v) default?
+
+---
+
+## Results — Omni Reference (Seedance 2.0)
+
+**New finding post-v0.5.1:** Seedance 2.0 is accessible via TopView's
+**Omni Reference** endpoint (`POST /v1/common_task/omni_reference/task/submit`)
+— a completely different endpoint from the i2v/t2v endpoints we used
+in the first pass. In the API, Seedance 2.0 is labeled **"Standard"** and
+**"Fast"** (not "Seedance 2.0"), which is why we missed it on the first
+scrape.
+
+### Why this matters for Scooby
+
+Omni Reference takes up to **9 reference images** and 3 reference videos
+via `<<<Image1>>>`, `<<<Image2>>>` syntax in the prompt. The interesting
+capability for a character-driven drama platform is **multi-image
+reference** — pass a character lookbook once and keep the character
+consistent across all 8 scenes of an episode.
+
+### Seedance 2.0 Fast ⏳ (pending)
+
+_Single-image reference test. Direct quality comparison against Kling 2.6
+and Vidu Q3 Pro at similar price._
+
+_Command:_
+```
+python scripts/test_topview_omni_reference.py "C:\Data\Cousin Ingrid\Git Hub\scooby\test_scene.png" --model seedance_2.0_fast
+```
+
+- Expected cost: ~4.8 credits (5s, 720p, with free audio)
+- Expected dims: true 9:16 (720x1280 or similar)
+
+**Qualitative notes** (fill in after watching):
+
+- [ ] Quality vs Kling 2.6 at similar price point:
+- [ ] Audio quality (sound is free on Seedance 2.0):
+- [ ] Does `<<<Image1>>>` reference feel substantively different from
+      passing the image as a first-frame anchor?
+
+### Seedance 2.0 Standard — character consistency ⏳ (pending)
+
+_Two-image reference: scene setting + character portrait. This is the
+killer-feature test._
+
+_Command:_
+```
+python scripts/test_topview_omni_reference.py "C:\Data\Cousin Ingrid\Git Hub\scooby\test_scene.png" "path/to/character.png" --model seedance_2.0_standard
+```
+
+- Expected cost: ~6 credits (5s, 720p, with free audio)
+- You'll need a second image: any existing Scooby-generated character
+  portrait, or a clean portrait photo
+
+**Qualitative notes** (fill in after watching):
+
+- [ ] Does the character in the output look like the `<<<Image2>>>` reference?
+- [ ] Does the scene setting still look like `<<<Image1>>>`?
+- [ ] Is the result coherent, or does mixing references produce artifacts?
+- [ ] If character consistency holds up, this is the premium tier for
+      full-episode generation — worth the ~48 credits/episode?
 
 ---
 

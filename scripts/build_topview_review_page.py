@@ -46,6 +46,18 @@ FRIENDLY = {
         "blurb": "Remarkably cheap — roughly 10× cheaper per second than Option A. No sound though; we'd need to add music/voiceover separately.",
         "tier_badge": "💰 ultra-budget",
     },
+    "seedance_2.0_fast": {
+        "title": "Option H — Latest model (fast tier)",
+        "subtitle": "Seedance 2.0 Fast",
+        "blurb": "ByteDance's newest model — supports multi-image reference for character consistency across scenes. Premium price (~5 credits for 5s with sound, free audio included).",
+        "tier_badge": "💎 premium",
+    },
+    "seedance_2.0_standard": {
+        "title": "Option I — Latest model, best quality",
+        "subtitle": "Seedance 2.0 Standard",
+        "blurb": "ByteDance's flagship. Multi-image reference for character consistency — lets us lock a character's look once and keep it across all 8 scenes of an episode. Free native audio.",
+        "tier_badge": "💎💎 flagship",
+    },
     "sora_2_pro_i2v": {
         "title": "Option D — Blocked",
         "subtitle": "Sora 2 Pro (Image → Video)",
@@ -166,8 +178,27 @@ def render_page(runs: list[dict]) -> str:
     """Render the full HTML page."""
     i2v_runs = [r for r in runs if r["kind"] == "i2v"]
     t2v_runs = [r for r in runs if r["kind"] == "t2v"]
+    omni_runs = [r for r in runs if r["kind"] == "omni"]
 
     i2v_cards = "".join(render_card(r) for r in i2v_runs)
+    omni_cards = "".join(render_card(r) for r in omni_runs)
+
+    # Only emit the Omni Reference section if there are actual omni runs — otherwise
+    # don't show an empty/confusing section to the non-technical partner.
+    if omni_cards:
+        omni_section = f"""
+<div class="section">
+  <div class="section-intro">
+    <h2>Seedance 2.0 — multi-image reference (character consistency test)</h2>
+    <p>ByteDance's newest model lets us pass multiple reference images at once — a scene setting <em>and</em> a character's likeness — and keep the character consistent across every scene. This is the premium tier. Does the character hold up?</p>
+  </div>
+  <div class="grid">
+    {omni_cards}
+  </div>
+</div>
+"""
+    else:
+        omni_section = ""
     t2v_cards = "".join(render_card(r) for r in t2v_runs)
 
     generated = datetime.now().strftime("%B %d, %Y")
@@ -370,6 +401,8 @@ def render_page(runs: list[dict]) -> str:
   </div>
 </div>
 
+{omni_section}
+
 <div class="cost-table">
   <h2>💰 Rough cost per episode</h2>
   <p>For context — an episode is about 8 scenes × 5 seconds each = 40 seconds total. Costs here are in <strong>TopView credits</strong> (we pay for these with our Pro subscription).</p>
@@ -385,6 +418,8 @@ def render_page(runs: list[dict]) -> str:
       <tr><td>Seedance Fast (Image → Video)</td><td>~3</td><td>❌</td></tr>
       <tr><td>Kling 2.6 (Image → Video)</td><td>~26</td><td>✅</td></tr>
       <tr><td>Vidu Q3 Pro (Image → Video)</td><td>~36</td><td>✅</td></tr>
+      <tr><td>Seedance 2.0 Fast (multi-image ref)</td><td>~38</td><td>✅ free</td></tr>
+      <tr><td>Seedance 2.0 Standard (multi-image ref)</td><td>~48</td><td>✅ free</td></tr>
       <tr><td>Kling V3 (Prompt only)</td><td>~32</td><td>✅</td></tr>
       <tr><td>Seedance 1.5 pro (Prompt only)</td><td>~10</td><td>✅</td></tr>
       <tr><td>Sora 2 Pro (Prompt only)</td><td>~67</td><td>❌</td></tr>
