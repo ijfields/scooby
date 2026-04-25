@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import logging
 
 from google import genai
@@ -50,9 +49,7 @@ def generate_image_nb2(
     for part in response.parts:
         if part.inline_data is not None:
             image = part.as_image()
-            buf = io.BytesIO()
-            image.save(buf, format="PNG")
-            png_bytes = buf.getvalue()
+            png_bytes = image.image_bytes
             logger.info("Nanobanana 2 image generated: %d bytes", len(png_bytes))
             return png_bytes
 
