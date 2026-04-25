@@ -286,7 +286,7 @@ def compose_and_render_task(self, episode_id: str) -> dict:
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, "final.mp4")
 
-        render_video(composition, output_path)
+        render_video(composition, output_path, session)
 
         episode.final_video_url = output_path
         episode.status = "preview_ready"
@@ -358,7 +358,7 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
         try:
             compose_and_render_task(episode_id)
         except Exception as e:
-            logger.warning("Video render skipped for episode %s (Remotion not ready): %s", episode_id, e)
+            logger.warning("Video render failed for episode %s: %s", episode_id, e)
 
         # Done — mark completed even without video render
         # The slideshow preview works with just images + optional audio

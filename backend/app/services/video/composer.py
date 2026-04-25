@@ -50,6 +50,14 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
             ).order_by(VideoAsset.created_at.desc()).limit(1)
         ).scalar_one_or_none()
 
+        anim_asset = session.execute(
+            select(VideoAsset).where(
+                VideoAsset.scene_id == scene.id,
+                VideoAsset.asset_type == "animation",
+                VideoAsset.is_active.is_(True),
+            ).order_by(VideoAsset.created_at.desc()).limit(1)
+        ).scalar_one_or_none()
+
         scene_spec: dict = {
             "sceneId": str(scene.id),
             "beatLabel": scene.beat_label,
@@ -71,7 +79,14 @@ def build_composition_json(session: Session, episode_id: str) -> dict:
             "transition": {"type": "crossfade", "durationFrames": 15},
         }
 
+        # Asset IDs for the ffmpeg renderer (direct DB blob access)
+        if image_asset:
+            scene_spec["imageAssetId"] = str(image_asset.id)
+        if anim_asset:
+            scene_spec["animationAssetId"] = str(anim_asset.id)
+
         if vo_asset:
+            scene_spec["voiceoverAssetId"] = str(vo_asset.id)
             scene_spec["voiceover"] = {
                 "url": f"/api/v1/assets/{vo_asset.id}/file",
                 "startOffsetFrames": 15,

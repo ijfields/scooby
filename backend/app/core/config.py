@@ -43,8 +43,10 @@ class Settings(BaseSettings):
     # Clerk
     CLERK_ISSUER_URL: str = ""
 
-    # Remotion
-    REMOTION_SIDECAR_PATH: str = "./remotion"
+    # Video rendering
+    FFMPEG_PATH: str = "ffmpeg"
+    FFPROBE_PATH: str = "ffprobe"
+    REMOTION_SIDECAR_PATH: str = "./remotion"  # deprecated — ffmpeg is now used
 
     # Rate limits
     MAX_EPISODES_PER_USER_DAY: int = 10
