@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Scooby — Frontend
 
-## Getting Started
+Next.js 16 App Router frontend for the Scooby story-to-video platform.
 
-First, run the development server:
+For project-wide setup, see the [root README](../README.md). For deployment, see [DEPLOY.md](../DEPLOY.md).
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev    # → http://localhost:3001 (port 3000 is usually occupied)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The dev server expects the backend at `http://localhost:8000`. Set `NEXT_PUBLIC_API_URL` in `.env.local` to point elsewhere.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Important: Next.js 16 conventions
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses **Next.js 16**, which has breaking changes from earlier versions you may know. APIs, conventions, and file structure may differ from training data. Read the relevant guide in `node_modules/next/dist/docs/` before changing anything significant. Heed deprecation notices.
 
-## Learn More
+## Auth
 
-To learn more about Next.js, take a look at the following resources:
+Authentication is via Clerk. Required env vars:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — publishable (client-safe) key
+- `CLERK_SECRET_KEY` — secret key, used server-side by Next.js middleware
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`
+- `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+User identity flows: Clerk JWT → backend `get_current_user` → user record keyed on `clerk_id`. The backend separately fetches the real email/name/avatar from Clerk's Backend API (see [backend/app/core/auth.py](../backend/app/core/auth.py)).
 
-## Deploy on Vercel
+## Linting / typechecking
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint          # ESLint
+npx tsc --noEmit      # Type check (matches CI)
+```
