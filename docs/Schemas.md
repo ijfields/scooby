@@ -201,7 +201,7 @@ CREATE TABLE episodes (
     voice_style_id      UUID REFERENCES style_presets(id),
     music_style_id      UUID REFERENCES style_presets(id),
     status              VARCHAR(20) NOT NULL DEFAULT 'draft', -- 'draft', 'scenes_generated', 'generating', 'preview_ready', 'exported'
-    composition_json    JSONB,                                -- Remotion composition config
+    composition_json    JSONB,                                -- ffmpeg renderer composition spec (built by composer.build_composition_json)
     final_video_url     TEXT,                                 -- S3 URL of rendered MP4
     final_video_duration_sec NUMERIC(6,2),
     script_pdf_url      TEXT,

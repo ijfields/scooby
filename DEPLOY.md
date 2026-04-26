@@ -112,6 +112,7 @@ CELERY_BROKER_URL=redis://default:<password>@<redis-host>.railway.internal:6379
 CELERY_RESULT_BACKEND=redis://default:<password>@<redis-host>.railway.internal:6379
 ALLOWED_ORIGINS=http://localhost:3001,http://localhost:3000,https://<frontend-domain>.up.railway.app
 CLERK_ISSUER_URL=https://<your-clerk-instance>.clerk.accounts.dev
+CLERK_SECRET_KEY=sk_test_...        # required: backend calls Clerk Backend API to fetch user email/name/avatar
 ANTHROPIC_API_KEY=sk-ant-...
 STABILITY_API_KEY=sk-...
 ELEVENLABS_API_KEY=sk_...
@@ -176,7 +177,8 @@ railway run python -m scripts.seed_style_presets
 
 ### JWT / Clerk Auth Errors
 - `pyjwt[crypto]` is required (not just `pyjwt`) for RSA key verification.
-- Ensure `CLERK_ISSUER_URL` is set on the backend.
+- Ensure `CLERK_ISSUER_URL` is set on the backend (used for JWKS lookup to verify JWT signatures).
+- Ensure `CLERK_SECRET_KEY` is set on the backend — without it, new users get a synthetic `user_<id>@clerk.user` email instead of their real Clerk profile. Backend calls `GET https://api.clerk.com/v1/users/{id}` on first auth to populate email/name/avatar.
 
 ### ElevenLabs 401 Errors
 - API key must have **Text to Speech** permission enabled (not just Voices).
@@ -194,8 +196,10 @@ railway run python -m scripts.seed_style_presets
 - `include=["app.tasks.ai", "app.tasks.pipeline"]` must be set in `celery_app.py`
 - Task routing is defined in `celery_app.py` — unrouted tasks go to the default `celery` queue.
 
-### Remotion Rendering Fails
-- The worker container does not include Node.js/Remotion. Video compositing step requires Remotion sidecar setup (TODO).
+### Video Render Fails
+- Worker container ships with `ffmpeg` and `fonts-liberation` (installed via apt in `Dockerfile.worker`). If `ffmpeg: command not found`, the build is stale or the apt install failed — rebuild the worker.
+- Render uses pure ffmpeg subprocess calls (Ken Burns zoompan + xfade crossfades + drawtext captions). No Node.js / Remotion dependency. The `REMOTION_SIDECAR_PATH` config setting is deprecated and unused.
+- `FFMPEG_PATH` and `FFPROBE_PATH` env vars default to `ffmpeg` / `ffprobe` (matches the apt install). Override only if you've installed binaries elsewhere.
 
 ### Duplicate Row Errors
 - Pipeline retries can create duplicate `VideoAsset` records. Queries use `ORDER BY created_at DESC LIMIT 1` to get the latest.

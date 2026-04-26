@@ -18,7 +18,7 @@
 | 1.6 Scene Editor UI | **Done** | Beat labels, inline edit, reorder, delete, preview link |
 | 1.7 Style & Voice Selection | **Done** | Visual/voice/music presets, duration toggle |
 | 1.8 Video Generation Pipeline | **Done** | Pluggable provider system: Stability AI (default) + Nanobanana 2 images, Kling 3.0 animation; Celery orchestration |
-| 1.9 Preview & Export | **Partial** | Scene-by-scene slideshow preview working; Remotion video render not started |
+| 1.9 Preview & Export | **Partial** | Scene-by-scene slideshow preview working; ffmpeg renderer verified end-to-end on production assets (silent video, full pipeline with VO not yet exercised) |
 | 1.10 Testing & Polish | **Partial** | 34 automated unit tests (providers, pipeline, YouTube import); Testing Checklist doc; E2E tests not started |
 
 ### Recent Additions (Session 004)
@@ -149,8 +149,8 @@ YouTube URL → POST /youtube/import
 | # | Task | Details | Priority |
 |---|------|---------|----------|
 | 1 | Per-scene regeneration | "Regenerate image" and "Regenerate voiceover" buttons per scene | High |
-| 2 | Remotion integration | Node.js sidecar, video composition, MP4 render | Medium — slideshow covers 80% |
-| 3 | MP4 download | Direct download of rendered video | Blocked on Remotion |
+| 2 | ~~Remotion integration~~ | **Done 2026-04-23** — replaced with ffmpeg pipeline in worker container | — |
+| 3 | MP4 download | Direct download of rendered video | Unblocked — wire `episode.final_video_url` to download endpoint after a successful render run |
 | 4 | Script PDF export | Generate and download beat-by-beat script | Low |
 
 ### 1.10 Testing & Polish
@@ -168,7 +168,7 @@ YouTube URL → POST /youtube/import
 
 ## Phase 1.5: Veo Movie Mode (unchanged)
 
-See [Enhancements.md](./Enhancements.md) for full spec. Prerequisite: Phase 1 complete with Remotion integration.
+See [Enhancements.md](./Enhancements.md) for full spec. Prerequisite: Phase 1 complete with ffmpeg compositor (done 2026-04-23).
 
 ---
 
@@ -208,7 +208,7 @@ See [Enhancements.md](./Enhancements.md).
 | Branding pass (palette, typography, logo) | After lexicon | Pending |
 | Shareable preview links | After branding | Pending |
 | Cofounder feedback incorporated | Ongoing | Pending |
-| Remotion video export | After feedback | Pending |
+| ffmpeg video export | After feedback | Renderer verified — needs end-to-end run with VO + UI download wiring |
 | Production Clerk keys | Before public launch | Pending |
 | Public beta | TBD | Pending |
 
@@ -229,10 +229,12 @@ See [Enhancements.md](./Enhancements.md).
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-03-25 | Monorepo structure (frontend/backend/remotion) | Simpler CI, shared types later |
+| 2026-04-23 | Replace Remotion sidecar with ffmpeg pipeline | Worker container can install ffmpeg via apt; eliminates Node.js dependency in the Python worker; render verified end-to-end |
+| 2026-04-26 | Backend fetches user profile from Clerk Backend API on auth | Clerk JWTs don't include email by default; synthetic emails were polluting the user table |
 | 2026-03-26 | Combined landing page + app (not separate sites) | MVP speed, single deploy |
 | 2026-03-28 | Store assets as LargeBinary in Postgres (not S3) | Simpler for MVP, migrate to S3 later |
 | 2026-03-28 | Railway for all services (not Vercel + Fly) | Single platform, simpler ops |
-| 2026-03-29 | Slideshow preview instead of waiting for Remotion | Gets 80% of experience now |
+| 2026-03-29 | Slideshow preview instead of waiting for the compositor | Gets 80% of experience now (compositor since shipped 2026-04-23) |
 | 2026-03-29 | Shareable links before team features | Solves the immediate need (feedback) without the complexity of multi-user |
 | 2026-03-29 | Lexicon rename before adding series | Foundational — rename once, not twice |
 | 2026-03-31 | YouTube-to-Series as second input path | Makes Scooby "Canva with multi-use" — differentiates from Opus Clip/CapCut/Descript by reimagining content, not clipping it |

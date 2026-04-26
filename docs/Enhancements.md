@@ -1,6 +1,6 @@
 # Scooby — Enhancements & Out-of-Scope Items
 
-> **Last updated:** 2026-04-01
+> **Last updated:** 2026-04-26
 
 Items below are explicitly out of scope for the MVP but represent the product roadmap. They are organized by phase and priority.
 
@@ -8,7 +8,7 @@ Items below are explicitly out of scope for the MVP but represent the product ro
 
 ## Phase 1.5: Veo Movie Mode
 
-> **Prerequisite:** MVP (Phase 1) ships with Storyboard Mode (static images + Ken Burns). Movie Mode adds AI-generated video clips as a premium alternative.
+> **Prerequisite:** MVP (Phase 1) ships with Storyboard Mode (static images + Ken Burns via ffmpeg). Movie Mode adds AI-generated video clips as a premium alternative.
 
 ### Generation Mode Toggle
 
@@ -16,8 +16,8 @@ The wizard gains a mode selector at the Style & Voice step:
 
 | Mode | Pipeline | Output | Cost Tier |
 |------|----------|--------|-----------|
-| **Storyboard Mode** (default) | Stability AI images → Remotion Ken Burns composition | Static images with pan/zoom, VO, captions | Standard (included) |
-| **Movie Mode** | Veo video clips → Remotion clip stitching | AI-generated video clips with VO overlay and captions | Premium (paid) |
+| **Storyboard Mode** (default) | Stability AI / Nanobanana 2 images → ffmpeg Ken Burns composition | Static images with pan/zoom, VO, captions | Standard (included) |
+| **Movie Mode** | Veo video clips → ffmpeg clip stitching | AI-generated video clips with VO overlay and captions | Premium (paid) |
 
 ### Character Bible
 
@@ -50,9 +50,9 @@ Each scene's cinematic script is sent to the **Gemini / Veo API** for video gene
 - **Retry logic:** If a clip fails content safety filters, auto-retry with softened prompt (up to 2 retries)
 - **Storage:** Generated clips stored in S3-compatible storage alongside image assets
 
-### Clip Composition (Remotion)
+### Clip Composition (ffmpeg)
 
-Instead of composing static images with Ken Burns effects, Remotion stitches Veo clips:
+Instead of composing static images with Ken Burns effects, ffmpeg stitches Veo clips:
 
 - **Input:** Ordered list of ~8-second video clips + VO audio + caption data
 - **Transitions:** Crossfade (default), cut, or dip-to-black between clips
@@ -85,7 +85,7 @@ Additional generation backends to evaluate alongside Stability AI (images) and V
 **Nanobanana 2 + Kling 3.0 pipeline** as a Storyboard-to-Movie bridge:
 1. Generate scene image with Nanobanana 2 (free)
 2. Animate scene image into ~8s video clip with Kling 3.0 (~$0.05-0.10)
-3. Compose animated clips with Remotion (existing pipeline)
+3. Compose animated clips with ffmpeg (existing pipeline — same compositor as Storyboard Mode)
 
 This hybrid approach could produce more cinematic results than Ken Burns on static images, at a lower cost than full Veo generation — a potential **"Movie Lite" tier** between Storyboard and full Movie Mode.
 

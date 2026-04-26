@@ -1,6 +1,6 @@
 # Scooby — Task Manager / Memory Bank
 
-> **Last updated:** 2026-03-25
+> **Last updated:** 2026-04-26
 
 ---
 
@@ -14,7 +14,8 @@
 | Landing Page Build | Completed |
 | Core Wizard Flow | Completed |
 | Railway Deployment | Completed |
-| Video Pipeline | **In Progress** — images + TTS working, Remotion rendering TODO |
+| Video Pipeline | **Mostly working** — images + TTS working; ffmpeg compositor verified end-to-end on production assets 2026-04-25 (silent — full run with VO not yet exercised) |
+| Auth | **Working** — Clerk JWT verify + Backend API profile fetch (since 2026-04-26) |
 
 ---
 
@@ -44,15 +45,18 @@
 
 ## Current
 
-**Status:** Full platform deployed on Railway. Video pipeline working through image generation and TTS. Remotion video rendering not yet integrated into worker container.
+**Status:** Full platform deployed on Railway. Image + TTS pipelines working. ffmpeg compositor (replacing the never-shipped Remotion sidecar) is in place and verified end-to-end against real production assets. Auth fixed to fetch real user profile from Clerk's Backend API.
+
+**Known issues:**
+- 2 production episodes (`00adb67f`, `3d7dae6b`) stalled at the voiceover step — never finished VO generation, stuck in `generating` status. Cause not diagnosed.
 
 ---
 
 ## Next Steps
 
-1. **Remotion integration** — Add Node.js + Remotion to worker container, or create separate rendering service
-2. **Preview page** — Wire up video player to rendered MP4
-3. **Export/download** — Enable MP4 download from preview page
+1. **Diagnose stalled-VO root cause** — why those 2 episodes never finished voiceover generation
+2. **Full pipeline run with VO** — produce a complete episode end-to-end (images + VO + ffmpeg render) and download it
+3. **Wire MP4 download endpoint** — `episode.final_video_url` to public download URL
 4. **Style preset seeding** — Ensure DB has valid voice IDs (free-tier compatible)
 5. **Error recovery** — Better retry logic to avoid duplicate asset generation
 

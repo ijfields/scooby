@@ -36,7 +36,7 @@ Scooby is a "Canva for stories" web application that enables non-technical write
 | Backend | Python / FastAPI |
 | Database | PostgreSQL |
 | Task Queue | Redis / Celery |
-| Video Rendering | Remotion |
+| Video Rendering | ffmpeg |
 | AI Text Processing | Claude API (Anthropic) |
 | Image Generation | Stability AI |
 | Voice Synthesis | ElevenLabs |
@@ -1321,7 +1321,7 @@ Retrieve a single style preset with full configuration details.
 
 ### 6. Video Generation Pipeline
 
-These endpoints trigger the multi-step video generation pipeline: image generation (Stability AI), voiceover synthesis (ElevenLabs), and video composition (Remotion). All generation operations are asynchronous and tracked via generation jobs.
+These endpoints trigger the multi-step video generation pipeline: image generation (Stability AI or Nanobanana 2), voiceover synthesis (ElevenLabs), and video composition (ffmpeg). All generation operations are asynchronous and tracked via generation jobs.
 
 ---
 
@@ -1994,6 +1994,6 @@ All list endpoints return paginated results with the following envelope:
 - Story CRUD operations
 - Episode management with style presets
 - AI-powered scene breakdown via Claude API
-- Full video generation pipeline (Stability AI + ElevenLabs + Remotion)
+- Full video generation pipeline (Stability AI / Nanobanana 2 + ElevenLabs + ffmpeg)
 - Real-time progress tracking via WebSocket
 - Video and script export/download

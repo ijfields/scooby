@@ -240,7 +240,7 @@ Scooby doesn't clip the original video. It *reimagines* the content as a series 
   1. Generate per-scene image prompts from visual descriptions
   2. Generate images in parallel (Stability AI / similar)
   3. Generate voiceover audio (ElevenLabs)
-  4. Compose video (Remotion): images + pan/zoom + VO + music + captions
+  4. Compose video (ffmpeg): images + Ken Burns pan/zoom + VO + captions
   5. Render MP4
 - **Frontend:** WebSocket progress updates showing current stage
 - **Per-scene regeneration:** User can regenerate visuals or VO for individual scenes without re-rendering the whole video
@@ -320,7 +320,7 @@ Attribution is **automatic and non-removable** for YouTube-sourced content. Orig
 | **Python / FastAPI** | Async-native, great for AI orchestration |
 | **PostgreSQL** | Relational data (stories, episodes, scenes) |
 | **Redis + Celery** | Async job queue for generation pipeline |
-| **Remotion (Node.js sidecar)** | Programmatic video composition |
+| **ffmpeg** | Programmatic video composition (Ken Burns + xfade + drawtext) |
 
 ### External AI Services
 
@@ -329,7 +329,7 @@ Attribution is **automatic and non-removable** for YouTube-sourced content. Orig
 | **Claude (Anthropic)** | Story → scene breakdown, prompt engineering |
 | **Stability AI** | Image generation from scene descriptions |
 | **ElevenLabs** | Text-to-speech voiceover |
-| **Remotion** | Video composition and rendering |
+| **ffmpeg** | Video composition and rendering |
 
 ### Infrastructure (MVP)
 
@@ -368,7 +368,7 @@ Attribution is **automatic and non-removable** for YouTube-sourced content. Orig
 
 - **Budget:** MVP built by a small team; minimize ongoing API costs
 - **AI costs:** Image generation and TTS have per-unit costs — must estimate and potentially limit free usage
-- **Rendering time:** Remotion render may take 1–5 minutes per episode; user must be informed
+- **Rendering time:** ffmpeg render may take 1–5 minutes per episode; user must be informed
 - **Content moderation:** AI-generated content needs basic safety checks
 
 ### Assumptions

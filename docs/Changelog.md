@@ -6,6 +6,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.0] — 2026-04-26
+
+### [CHANGED]
+
+**Video compositor: Remotion → ffmpeg.** The never-shipped Remotion Node.js sidecar is gone. `backend/app/services/video/renderer.py` now composes the final 9:16 MP4 directly via `ffmpeg` subprocess calls — Ken Burns zoompan on static images, scale+pad+tpad on animation clips, xfade crossfades (≤4 scenes) or concat demuxer (5+), `adelay`-mixed voiceovers, `drawtext` caption burn. `Dockerfile.worker` and `worker/Dockerfile` install `ffmpeg` + `fonts-liberation`. `FFMPEG_PATH` and `FFPROBE_PATH` config settings added (default to system PATH). `REMOTION_SIDECAR_PATH` retained as deprecated, unused. `compose_and_render_task` no longer skips on render failure — failures now surface in logs as errors. Verified end-to-end on production data 2026-04-25 (silent video; full render with VO not yet exercised).
+
+### [ADDED]
+
+**Clerk Backend API integration for user profiles.** Standard Clerk JWTs don't include email/name/avatar by default, so every new user fell through to a synthetic `user_<clerk_id>@clerk.user` email. Backend now calls `GET https://api.clerk.com/v1/users/{user_id}` on first auth (in `get_current_user`) and populates `email`, `display_name`, `avatar_url` from the real profile. JWT-claim and synthetic-email fallbacks remain as defense-in-depth. Requires new `CLERK_SECRET_KEY` env var on the backend service.
+
+`scripts/backfill_user_emails.py` — idempotent one-shot migration tool, dry-run by default, skips users whose email already looks real. Used to update the 2 existing production users (Ingrid Fields, Joyce Harris) with their real Google emails on 2026-04-26.
+
+`scripts/test_ffmpeg_renderer.py` — synthetic-asset smoke test for the compositor. Exercises Ken Burns, animation-clip path, xfade crossfade, concat demuxer, audio mixing, and caption burn — no DB or API keys needed.
+
+### [FIXED]
+
+**Caption render on Windows.** `_get_font_path()` over-escaped the `:` in Windows paths (`C\\:/Windows/...`) which broke ffmpeg's filter parser. Now uses single-backslash escape (`\:`). Linux paths unaffected (no colon to escape) so production was never broken; only local dev rendering with captions failed.
+
+**`nanobanana2.py` BytesIO roundtrip removed** in favor of the SDK's direct `image.image_bytes` accessor.
+
+### Infrastructure
+
+- 4 stale empty Postgres services and 2 stale Redis services deleted from Railway, plus 4 orphaned `postgres-volume-*` volumes. Active services: backend, worker, scooby Frontend, Postgres, Redis-7bIt.
+- Backend service env: `CLERK_SECRET_KEY` set.
+- 2 production episodes (`00adb67f`, `3d7dae6b`) identified as stalled mid-pipeline at the voiceover step (6 images, 0 voiceovers, status `generating`). Pre-existed this release; cause not yet diagnosed.
+
+---
+
 ## [0.5.1] — 2026-04-18
 
 ### [ADDED]

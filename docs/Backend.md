@@ -4,6 +4,13 @@
 **Date:** 2026-03-25
 **Status:** Draft
 
+> ⚠️ **Out of date as of 2026-04-26 — partial rewrite needed.**
+> Two major changes since this doc was written:
+> 1. **Compositor is ffmpeg, not Remotion.** Section 5 ("Remotion Video Composition"), the Remotion CLI invocation, the React/`<Composition>` architecture, and the Node.js sidecar references are historical. The shipped compositor is pure ffmpeg subprocess calls in `backend/app/services/video/renderer.py` (Ken Burns zoompan + xfade crossfades + drawtext captions). See [Changelog v0.6.0](./Changelog.md) and the renderer source for the current design.
+> 2. **Auth fetches user profile from Clerk Backend API.** `get_current_user` calls `GET https://api.clerk.com/v1/users/{id}` on first auth to populate email/name/avatar. Requires `CLERK_SECRET_KEY` env var. See `backend/app/core/auth.py:fetch_clerk_user`.
+>
+> The rest of the doc (data models, Celery topology, image/TTS pipelines, observability) is still accurate.
+
 ---
 
 ## Table of Contents
