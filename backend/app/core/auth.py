@@ -85,6 +85,45 @@ async def get_current_clerk_user_id(request: Request) -> str:
         )
 
 
+async def fetch_clerk_user(clerk_id: str) -> dict | None:
+    """Fetch a user's profile (email, name, avatar) from Clerk's Backend API.
+
+    Returns a dict with keys 'email', 'display_name', 'avatar_url' on success,
+    or None if CLERK_SECRET_KEY isn't configured or the request fails.
+    """
+    if not settings.CLERK_SECRET_KEY:
+        return None
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                f"https://api.clerk.com/v1/users/{clerk_id}",
+                headers={"Authorization": f"Bearer {settings.CLERK_SECRET_KEY}"},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPError:
+        return None
+
+    # Pick the primary email if marked, else the first one
+    primary_id = data.get("primary_email_address_id")
+    emails = data.get("email_addresses") or []
+    email = next(
+        (e.get("email_address") for e in emails if e.get("id") == primary_id),
+        None,
+    ) or (emails[0].get("email_address") if emails else None)
+
+    first = data.get("first_name") or ""
+    last = data.get("last_name") or ""
+    display_name = f"{first} {last}".strip() or None
+
+    return {
+        "email": email,
+        "display_name": display_name,
+        "avatar_url": data.get("image_url"),
+    }
+
+
 async def get_current_user(
     request: Request,
     clerk_id: str = Depends(get_current_clerk_user_id),
@@ -93,21 +132,39 @@ async def get_current_user(
     """Get the local User record for the authenticated Clerk user.
 
     Auto-creates the user on first request so the frontend doesn't
-    need to call /auth/sync manually.
+    need to call /auth/sync manually. New records get email + display_name
+    + avatar from Clerk's Backend API; falls back to JWT claims, then
+    to a synthetic email if all else fails.
     """
     result = await db.execute(select(User).where(User.clerk_id == clerk_id))
     user = result.scalar_one_or_none()
-    if user is None:
-        # Extract email from Clerk JWT claims
-        token = _extract_token(request)
+    if user is not None:
+        return user
+
+    # New user — try Clerk's Backend API first for the real email
+    profile = await fetch_clerk_user(clerk_id)
+
+    if profile and profile["email"]:
+        email = profile["email"]
+        display_name = profile["display_name"]
+        avatar_url = profile["avatar_url"]
+    else:
+        # Fallback: JWT claims (only works if Clerk JWT template includes email)
         try:
-            claims = jwt.decode(token, options={"verify_signature": False})
+            claims = jwt.decode(_extract_token(request), options={"verify_signature": False})
             email = claims.get("email") or claims.get("primary_email") or f"{clerk_id}@clerk.user"
         except Exception:
             email = f"{clerk_id}@clerk.user"
+        display_name = None
+        avatar_url = None
 
-        user = User(clerk_id=clerk_id, email=email)
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
+    user = User(
+        clerk_id=clerk_id,
+        email=email,
+        display_name=display_name,
+        avatar_url=avatar_url,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return user

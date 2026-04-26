@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     # Clerk
     CLERK_ISSUER_URL: str = ""
+    CLERK_SECRET_KEY: str = ""  # used to fetch user details (email/name/avatar) from Clerk Backend API
 
     # Video rendering
     FFMPEG_PATH: str = "ffmpeg"
