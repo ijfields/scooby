@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import io
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import undefer
 
 from app.api.deps import get_db
 from app.core.auth import get_current_user
@@ -22,31 +23,38 @@ router = APIRouter()
 @router.get("/episodes/{episode_id}/download/video")
 async def download_video(
     episode_id: str,
+    inline: bool = Query(default=False, description="If true, serve with Content-Disposition: inline for in-browser playback"),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
-    """Get download info for the final rendered video."""
+) -> StreamingResponse:
+    """Stream the final rendered MP4. Supports `?inline=1` for in-browser playback."""
     result = await db.execute(
-        select(Episode).join(Story).where(Episode.id == episode_id, Story.user_id == user.id)
+        select(Episode)
+        .join(Story)
+        .where(Episode.id == episode_id, Story.user_id == user.id)
+        .options(undefer(Episode.final_video_data))
     )
     episode = result.scalar_one_or_none()
     if episode is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Episode not found")
 
-    if not episode.final_video_url:
+    if not episode.final_video_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No rendered video available",
         )
 
     title_slug = (episode.title or "video").lower().replace(" ", "-")[:30]
-
-    return {
-        "download_url": episode.final_video_url,
-        "filename": f"{title_slug}.mp4",
-        "duration_sec": episode.final_video_duration_sec,
-        "resolution": "1080x1920",
-    }
+    disposition = "inline" if inline else "attachment"
+    return StreamingResponse(
+        io.BytesIO(episode.final_video_data),
+        media_type=episode.final_video_mime_type or "video/mp4",
+        headers={
+            "Content-Length": str(episode.final_video_size_bytes or len(episode.final_video_data)),
+            "Content-Disposition": f'{disposition}; filename="{title_slug}.mp4"',
+            "Accept-Ranges": "bytes",
+        },
+    )
 
 
 @router.get("/episodes/{episode_id}/download/script")

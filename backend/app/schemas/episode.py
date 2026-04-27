@@ -16,6 +16,8 @@ class EpisodeResponse(BaseModel):
     voice_style_id: UUID | None
     music_style_id: UUID | None
     final_video_url: str | None
+    final_video_size_bytes: int | None
+    final_video_mime_type: str | None
     episode_number: int | None
     series_angle: str | None
     created_at: datetime

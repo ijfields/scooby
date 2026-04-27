@@ -288,14 +288,25 @@ def compose_and_render_task(self, episode_id: str) -> dict:
 
         render_video(composition, output_path, session)
 
-        episode.final_video_url = output_path
+        # Persist the rendered MP4 in Postgres so it survives worker restarts.
+        # Worker /tmp is wiped on every redeploy; final_video_url alone is unsafe.
+        with open(output_path, "rb") as f:
+            video_bytes = f.read()
+        episode.final_video_data = video_bytes
+        episode.final_video_size_bytes = len(video_bytes)
+        episode.final_video_mime_type = "video/mp4"
+        episode.final_video_url = output_path  # kept for debugging / log correlation
         episode.status = "preview_ready"
         fps = composition.get("fps", 30)
         total_frames = composition.get("totalDurationFrames", 0)
         episode.final_video_duration_sec = round(total_frames / fps, 2) if fps else 0
 
         session.commit()
-        return {"episode_id": episode_id, "video_path": output_path}
+        return {
+            "episode_id": episode_id,
+            "video_path": output_path,
+            "video_bytes": len(video_bytes),
+        }
 
     finally:
         session.close()

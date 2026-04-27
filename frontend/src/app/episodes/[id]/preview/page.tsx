@@ -17,6 +17,8 @@ interface Episode {
   target_duration_sec: number;
   episode_number: number | null;
   series_angle: string | null;
+  final_video_size_bytes: number | null;
+  final_video_mime_type: string | null;
 }
 
 interface Story {
@@ -39,6 +41,8 @@ export default function PreviewPage() {
   const [story, setStory] = useState<Story | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -84,6 +88,47 @@ export default function PreviewPage() {
     }
     load();
   }, [episodeId, getToken, router]);
+
+  // Fetch the rendered MP4 as a blob when available — <video> can't pass
+  // auth headers natively, so we fetch with the bearer token, turn the
+  // bytes into a blob URL, and feed that to the player.
+  useEffect(() => {
+    if (!episode?.final_video_size_bytes) return;
+    let cancelled = false;
+    let createdUrl: string | null = null;
+    async function loadVideo() {
+      setVideoLoading(true);
+      try {
+        const token = await getToken();
+        const res = await fetch(
+          `${API_BASE}/api/v1/episodes/${episodeId}/download/video?inline=1`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!res.ok) throw new Error("Failed to load video");
+        const blob = await res.blob();
+        if (cancelled) return;
+        createdUrl = URL.createObjectURL(blob);
+        setVideoBlobUrl(createdUrl);
+      } catch (err) {
+        console.error("Video load failed:", err);
+      } finally {
+        if (!cancelled) setVideoLoading(false);
+      }
+    }
+    loadVideo();
+    return () => {
+      cancelled = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [episode?.final_video_size_bytes, episodeId, getToken]);
+
+  const handleDownloadVideo = async () => {
+    if (!videoBlobUrl) return;
+    const a = document.createElement("a");
+    a.href = videoBlobUrl;
+    a.download = `${(episode?.title || "video").toLowerCase().replace(/\s+/g, "-")}.mp4`;
+    a.click();
+  };
 
   async function handleShare() {
     setSharing(true);
@@ -188,6 +233,11 @@ export default function PreviewPage() {
               {sharing ? "Creating..." : "Share"}
             </Button>
           )}
+          {videoBlobUrl ? (
+            <Button variant="outline" size="sm" onClick={handleDownloadVideo}>
+              Download MP4
+            </Button>
+          ) : null}
           <Button variant="outline" size="sm" onClick={handleDownloadScript}>
             Download Script
           </Button>
@@ -215,8 +265,35 @@ export default function PreviewPage() {
         </div>
       )}
 
-      {/* Player */}
+      {/* Final rendered video — shown when available, falls back to the
+          scene-by-scene slideshow below if not. */}
+      {episode?.final_video_size_bytes ? (
+        <div className="mt-6">
+          {videoLoading && !videoBlobUrl ? (
+            <div className="flex aspect-[9/16] max-h-[80vh] w-full items-center justify-center rounded-lg border bg-muted">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="text-sm text-muted-foreground">
+                  Loading video ({Math.round(episode.final_video_size_bytes / 1024 / 1024)}MB)...
+                </p>
+              </div>
+            </div>
+          ) : videoBlobUrl ? (
+            <video
+              src={videoBlobUrl}
+              controls
+              autoPlay={false}
+              className="mx-auto aspect-[9/16] max-h-[80vh] w-full max-w-[450px] rounded-lg border bg-black"
+            />
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Scene slideshow — shown always (works even without a final render) */}
       <div className="mt-6">
+        <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+          {episode?.final_video_size_bytes ? "Scene-by-scene preview" : "Preview"}
+        </h2>
         <ScenePlayer scenes={scenes} title={episode?.title} />
       </div>
 

@@ -4,9 +4,9 @@ import uuid
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import BigInteger, ForeignKey, Index, Integer, LargeBinary, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, generate_uuid
 
@@ -31,6 +31,12 @@ class Episode(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="draft")
     composition_json: Mapped[dict | None] = mapped_column(JSONB)
     final_video_url: Mapped[str | None] = mapped_column(Text)
+    # Final rendered MP4 stored in Postgres so it survives worker restarts
+    # (worker /tmp is ephemeral). Use deferred() so list/detail queries don't
+    # pull the blob unless explicitly requested.
+    final_video_data: Mapped[bytes | None] = deferred(mapped_column(LargeBinary, nullable=True))
+    final_video_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    final_video_mime_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
     final_video_duration_sec: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
     script_pdf_url: Mapped[str | None] = mapped_column(Text)
     episode_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
