@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.2] — 2026-04-27
+
+### [ADDED]
+
+**Final-video persistence in Postgres + in-app player.** Rendered MP4s now live in `episodes.final_video_data` (LargeBinary, deferred), with `final_video_size_bytes` and `final_video_mime_type` exposed on `EpisodeResponse`. The compositor task reads the rendered file after writing and stores its bytes alongside; the file path stays on `final_video_url` for log correlation only. Migration `f7g2h8i9k0l1`.
+
+`GET /api/v1/episodes/{id}/download/video` rewritten — used to return JSON with the worker's `/tmp` path (which the browser couldn't load), now streams the bytes from Postgres with proper `Content-Type` / `Content-Length` / `Accept-Ranges` headers. New `?inline=1` query param for in-browser playback (Content-Disposition: inline) vs the default attachment download.
+
+The episode preview page now renders a `<video>` player above the slideshow when a final video is available — fetched via the auth-aware blob-URL pattern (same as the existing script download). New "Download MP4" button next to "Download Script". Slideshow remains as the secondary preview.
+
+`scripts/backfill_episode_videos.py` — one-shot recovery for the 2 production episodes (`00adb67f`, `3d7dae6b`) whose MP4s were rendered before the blob columns existed and would have vanished on the next worker `/tmp` wipe.
+
+### [FIXED]
+
+**Worker `/tmp` data loss on redeploy.** Before this release, `final_video_url` pointed to `/tmp/scooby/{id}/final.mp4` on the worker container. That path is wiped on every worker redeploy (env-var changes, code pushes, scaling, etc.), so any rendered episode would silently lose its video and the download endpoint would 404 on next request. Fixed by storing the bytes in Postgres directly.
+
+---
+
 ## [0.6.1] — 2026-04-26
 
 ### [FIXED]

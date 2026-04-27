@@ -202,7 +202,10 @@ CREATE TABLE episodes (
     music_style_id      UUID REFERENCES style_presets(id),
     status              VARCHAR(20) NOT NULL DEFAULT 'draft', -- 'draft', 'scenes_generated', 'generating', 'preview_ready', 'exported'
     composition_json    JSONB,                                -- ffmpeg renderer composition spec (built by composer.build_composition_json)
-    final_video_url     TEXT,                                 -- S3 URL of rendered MP4
+    final_video_url     TEXT,                                 -- worker /tmp path; kept for log correlation only — not servable
+    final_video_data    BYTEA,                                -- final rendered MP4 bytes (deferred load; survives worker restarts)
+    final_video_size_bytes BIGINT,
+    final_video_mime_type VARCHAR(100),
     final_video_duration_sec NUMERIC(6,2),
     script_pdf_url      TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
