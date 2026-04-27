@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.1] — 2026-04-26
+
+### [FIXED]
+
+**Stalled episodes stuck at `status='generating'`.** When `compose_and_render_task` raised, the orchestrator caught the exception (intentional — render failure is non-fatal, slideshow preview still works) but never updated `episode.status` away from `'generating'`. The episode was effectively done (job marked completed, images all there) but the UI polled forever waiting for the status to change. Now if render fails, the orchestrator refreshes the episode and explicitly sets `status='preview_ready'` so the UI advances. Diagnosed via the 2 production episodes (`00adb67f`, `3d7dae6b`) that ran in early April before the Remotion → ffmpeg switch — Remotion render failed every time, episode stayed stuck.
+
+---
+
 ## [0.6.0] — 2026-04-26
 
 ### [CHANGED]

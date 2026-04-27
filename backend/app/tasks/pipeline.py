@@ -351,17 +351,26 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
             logger.warning("Voiceover generation failed for episode %s, continuing: %s", episode_id, e)
             vo_skipped = -1  # all failed
 
-        # Step 4: Compose and render (skip if Remotion not available)
+        # Step 4: Compose and render (non-fatal — slideshow preview still works without final MP4)
         job.stage = "Rendering video"
         job.progress = 85
         session.commit()
+        render_succeeded = False
         try:
             compose_and_render_task(episode_id)
+            render_succeeded = True
         except Exception as e:
             logger.warning("Video render failed for episode %s: %s", episode_id, e)
 
-        # Done — mark completed even without video render
-        # The slideshow preview works with just images + optional audio
+        # Done — mark completed even without video render. compose_and_render_task
+        # flips episode.status to 'preview_ready' on success in its own session;
+        # if it failed, ensure the episode still leaves 'generating' so the UI
+        # doesn't spin forever (slideshow preview works with just images).
+        if not render_succeeded:
+            session.refresh(episode)
+            if episode.status == "generating":
+                episode.status = "preview_ready"
+
         job.status = "completed"
         job.progress = 100
         job.stage = "Video ready"
