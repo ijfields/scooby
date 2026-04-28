@@ -1,0 +1,68 @@
+[
+  {
+    "scene": 1,
+    "beat": "hook",
+    "task_id": "3e800d34bb144aa3a65f27bc0b2fcee4",
+    "file": "scene_1_hook.mp4",
+    "size": 8194865,
+    "dims": "720x1280",
+    "credit": 0.6,
+    "elapsed_s": 60,
+    "prompt": "CHARACTERS (consistent across all scenes):\n- JOYCE: middle-aged Black woman, warm expressive face, wearing a comfortable casual outfit (dark cardigan, jeans, sturdy sneakers). Walks with two forearm crutches due to mobility challenges. Calm and observant demeanor.\n- REBECCA: middle-aged white woman, friend of Joyce, casual neighborhood wear, helpful and warm energy.\n- SCHOOL KIDS: roughly 6-9 years old, mixed group of boys and girls, playing behind a chain-link fence at a small Christian elementary school playground.\nSTYLE: photorealistic, cinematic, warm afternoon light, suburban neighborhood street setting, vertical 9:16 portrait composition, shallow depth of field, gentle camera movement.\n\nSCENE:\nClose-up of worn walking sticks (forearm crutches) being gently placed on cracked asphalt, with children's laughter echoing in the background. Soft afternoon sunlight creates long shadows."
+  },
+  {
+    "scene": 2,
+    "beat": "setup",
+    "task_id": "f0d263bfb1884d728b86922e712b8dea",
+    "file": "scene_2_setup.mp4",
+    "size": 7880021,
+    "dims": "720x1280",
+    "credit": 0.6,
+    "elapsed_s": 100,
+    "prompt": "CHARACTERS (consistent across all scenes):\n- JOYCE: middle-aged Black woman, warm expressive face, wearing a comfortable casual outfit (dark cardigan, jeans, sturdy sneakers). Walks with two forearm crutches due to mobility challenges. Calm and observant demeanor.\n- REBECCA: middle-aged white woman, friend of Joyce, casual neighborhood wear, helpful and warm energy.\n- SCHOOL KIDS: roughly 6-9 years old, mixed group of boys and girls, playing behind a chain-link fence at a small Christian elementary school playground.\nSTYLE: photorealistic, cinematic, warm afternoon light, suburban neighborhood street setting, vertical 9:16 portrait composition, shallow depth of field, gentle camera movement.\n\nSCENE:\nMedium shot of Joyce looking toward a colorful playground where children are playing. A bright red ball sits abandoned against the street curb in the foreground."
+  },
+  {
+    "scene": 3,
+    "beat": "escalation_1",
+    "task_id": "98b7da812adb4f7a97dd6792b3549c94",
+    "file": "scene_3_escalation_1.mp4",
+    "size": 10727482,
+    "dims": "720x1280",
+    "credit": 0.6,
+    "elapsed_s": 70,
+    "prompt": "CHARACTERS (consistent across all scenes):\n- JOYCE: middle-aged Black woman, warm expressive face, wearing a comfortable casual outfit (dark cardigan, jeans, sturdy sneakers). Walks with two forearm crutches due to mobility challenges. Calm and observant demeanor.\n- REBECCA: middle-aged white woman, friend of Joyce, casual neighborhood wear, helpful and warm energy.\n- SCHOOL KIDS: roughly 6-9 years old, mixed group of boys and girls, playing behind a chain-link fence at a small Christian elementary school playground.\nSTYLE: photorealistic, cinematic, warm afternoon light, suburban neighborhood street setting, vertical 9:16 portrait composition, shallow depth of field, gentle camera movement.\n\nSCENE:\nWide shot showing a young girl at the chain-link fence pointing desperately toward the street, her face filled with hope, while another colorful ball bounces into the road behind the first red one."
+  },
+  {
+    "scene": 4,
+    "beat": "escalation_2",
+    "task_id": "84e333065c364e2ba59c5533cc4bb1ab",
+    "file": "scene_4_escalation_2.mp4",
+    "size": 8201995,
+    "dims": "720x1280",
+    "credit": 0.6,
+    "elapsed_s": 70,
+    "prompt": "CHARACTERS (consistent across all scenes):\n- JOYCE: middle-aged Black woman, warm expressive face, wearing a comfortable casual outfit (dark cardigan, jeans, sturdy sneakers). Walks with two forearm crutches due to mobility challenges. Calm and observant demeanor.\n- REBECCA: middle-aged white woman, friend of Joyce, casual neighborhood wear, helpful and warm energy.\n- SCHOOL KIDS: roughly 6-9 years old, mixed group of boys and girls, playing behind a chain-link fence at a small Christian elementary school playground.\nSTYLE: photorealistic, cinematic, warm afternoon light, suburban neighborhood street setting, vertical 9:16 portrait composition, shallow depth of field, gentle camera movement.\n\nSCENE:\nOver-the-shoulder shot of Joyce calling out to Rebecca, who is getting into her car in the distance. Joyce's arm is raised in greeting. Two colorful balls visible on the asphalt between them."
+  },
+  {
+    "scene": 5,
+    "beat": "climax",
+    "task_id": "4714b170f65b4c83ac9985763bc7bbc5",
+    "file": "scene_5_climax.mp4",
+    "size": 11045478,
+    "dims": "720x1280",
+    "credit": 0.6,
+    "elapsed_s": 80,
+    "prompt": "CHARACTERS (consistent across all scenes):\n- JOYCE: middle-aged Black woman, warm expressive face, wearing a comfortable casual outfit (dark cardigan, jeans, sturdy sneakers). Walks with two forearm crutches due to mobility challenges. Calm and observant demeanor.\n- REBECCA: middle-aged white woman, friend of Joyce, casual neighborhood wear, helpful and warm energy.\n- SCHOOL KIDS: roughly 6-9 years old, mixed group of boys and girls, playing behind a chain-link fence at a small Christian elementary school playground.\nSTYLE: photorealistic, cinematic, warm afternoon light, suburban neighborhood street setting, vertical 9:16 portrait composition, shallow depth of field, gentle camera movement.\n\nSCENE:\nHeartwarming medium shot of Joyce and Rebecca working together, throwing colorful playground balls over the chain-link fence to eager children reaching through the gaps. Golden hour lighting creates a warm glow."
+  },
+  {
+    "scene": 6,
+    "beat": "button",
+    "task_id": "e35f77fb10854decaef14e81cf894152",
+    "file": "scene_6_button.mp4",
+    "size": 5129562,
+    "dims": "720x1280",
+    "credit": 0.6,
+    "elapsed_s": 70,
+    "prompt": "CHARACTERS (consistent across all scenes):\n- JOYCE: middle-aged Black woman, warm expressive face, wearing a comfortable casual outfit (dark cardigan, jeans, sturdy sneakers). Walks with two forearm crutches due to mobility challenges. Calm and observant demeanor.\n- REBECCA: middle-aged white woman, friend of Joyce, casual neighborhood wear, helpful and warm energy.\n- SCHOOL KIDS: roughly 6-9 years old, mixed group of boys and girls, playing behind a chain-link fence at a small Christian elementary school playground.\nSTYLE: photorealistic, cinematic, warm afternoon light, suburban neighborhood street setting, vertical 9:16 portrait composition, shallow depth of field, gentle camera movement.\n\nSCENE:\nClose-up of Joyce's hands clapping together with joy, slightly weathered but full of life, with blurred playground happiness in the soft-focus background."
+  }
+]
