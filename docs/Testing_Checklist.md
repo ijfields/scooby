@@ -1,6 +1,6 @@
 # Scooby — Testing Checklist
 
-> **Last updated:** 2026-04-07
+> **Last updated:** 2026-04-27
 
 ---
 
@@ -163,5 +163,78 @@ After enabling new providers, monitor actual costs:
 | Nanobanana 2 | ~$0.034-0.067/image | Google Cloud Console → Billing |
 | Kling 3.0 Std | ~$0.35-0.50/5s clip | WaveSpeed dashboard |
 | Kling 3.0 Pro | ~$1.20/5s clip | WaveSpeed dashboard |
+| TopView Seedance 1.5 Pro | ~$0.30-0.50/5-8s clip | TopView dashboard (credits) |
 | Claude | ~$0.01-0.03/breakdown | Anthropic dashboard |
 | ElevenLabs | ~$0.01-0.03/scene | ElevenLabs usage page |
+
+---
+
+## Polishing Matrix (added 2026-04-27)
+
+> **Goal:** systematically test combinations of pipeline components to identify which produce the best output for the writer cofounder. Run one matrix cell per real story and capture quick subjective notes. The output of every cell is a viewable episode in production — link to the preview URL in the notes column.
+
+### Visual style × image provider
+
+Most important matrix to run first. Same story, same scene breakdown, vary just these two axes. Score on character consistency + visual coherence + "does this feel like the writer's tone?"
+
+| Visual style preset | Stability AI | Nanobanana 2 | Notes |
+|---------------------|--------------|--------------|-------|
+| Cinematic (default) | | | |
+| Watercolor | ❌ poor (Joyce 2026-04-26) | | Watercolor preset on Stability produced inconsistent character renders + duplicate object hallucinations (e.g. two red balls in foreground). Try NB2 with same preset before retiring it. |
+| Comic / graphic novel | ✓ good (Ingrid Betrayal Recording) | | Strong B&W ink-style renders for stylized drama. |
+| Photorealistic | ✓ good (Joyce $1 Standoff) | | Most cinematic-looking output of the three. |
+| Anime / illustrative | | | Not yet tested. |
+
+### Animation provider
+
+Run the same episode through each animation backend, compare the resulting clips' continuity + character coherence.
+
+| Animation provider | Cost / 5-8s clip | Status | Best for |
+|--------------------|------------------|--------|----------|
+| `none` (Storyboard / Ken Burns) | $0 | Default, working | Free tier, fastest, lowest cost |
+| Kling 3.0 std (WaveSpeed) | ~$0.35-0.50 | Built, untested | Mid-tier — needs validation run |
+| Kling 3.0 pro (WaveSpeed) | ~$1.20 | Built, untested | Premium tier |
+| TopView Seedance 1.5 Pro (t2v) | ~$0.30-0.50 | Eval in flight (Joyce Heart for Fun) | **Candidate winner per Phase 0** |
+| TopView Veo 3.1 Fast | TBD | Phase 0 only | Higher quality, native audio |
+
+### Voice preset (ElevenLabs)
+
+Subjective listen-test only — pick 2-3 narration styles per story and have the writer pick.
+
+| Voice | Voice ID | Tone | Use cases |
+|-------|----------|------|-----------|
+| George (default fallback) | `JBFqnCBsd6RMkjVDRZzb` | Warm storyteller | All-purpose |
+| Sarah | `EXAVITQu4vr4xnSDxMaL` | Bright, conversational | Lighter material |
+| Charlie | `IKne3meq5aSn9XLyUdCD` | Older, gravitas | Drama, retrospection |
+| Laura | `FGY2WhTYpPnrIDTdsKH5` | Younger female | Coming-of-age |
+| Roger | `CwhRBWXzGAHq8TQ4Fs17` | Grounded male | Documentary feel |
+
+Free-tier-safe voice list lives in [tts/generator.py:17](backend/app/services/tts/generator.py#L17). Anything outside that set falls back to George.
+
+### Story type × source
+
+| Source | Status | Notes |
+|--------|--------|-------|
+| User-typed text | ✓ Working | Both production users (Ingrid + Joyce) have used this path |
+| YouTube URL → series planner | Built, lightly tested | Run an end-to-end with a real YouTube video before exposing more broadly |
+
+### Caption rendering
+
+| Caption length | Result | Notes |
+|----------------|--------|-------|
+| Single short sentence (≤32 chars) | ✓ Single line, centered, readable | Joyce hook scene "Today I chose to just be." |
+| Wrapped multi-line (≥33 chars) | ✓ Multi-line stack, centered | Fixed in v0.6.3 (per-line drawtext) |
+| Special characters (`'`, `:`, `%`, `\`) | ✓ Escaped | Verified via the synthetic test in `scripts/test_ffmpeg_renderer.py` |
+
+---
+
+## Character Consistency (added 2026-04-27)
+
+t2v and t2i models don't have cross-call state — characters drift across independent scene generations. The mitigation is a **character bible** prepended to every scene prompt. Reference implementation lives in [scripts/eval_topview_joyce_heart.py](scripts/eval_topview_joyce_heart.py).
+
+Bible should be tight (≤500 chars) and cover: name, demographics, distinguishing features, typical clothing, demeanor. Avoid prompt bloat — verbose bibles dilute the scene-specific direction.
+
+**Open product question:** how should writers author the bible? Options being considered:
+- Auto-extract from `Story.raw_text` via Claude on first scene generation (no UI work needed)
+- Explicit "Character Bible" step in the wizard between scene breakdown and image gen (more friction, more control)
+- Hybrid: auto-extract a draft, let the writer edit before locking it in

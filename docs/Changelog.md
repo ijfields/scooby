@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.3] — 2026-04-27
+
+### [FIXED]
+
+**Captions truncated to a single overflowing line.** `_burn_captions` in the ffmpeg renderer joined wrapped lines with `'\n'` and fed the result into a single `drawtext text=` argument. ffmpeg's drawtext interpretation of `\n` as a real line break depends on expansion mode + font shaping; in production on the Linux worker it consumed the backslash and rendered the literal `n` inline, producing single-line captions that overflowed the 1080-wide frame. Now emits one `drawtext` filter per wrapped line with manual y-offsets so the block is vertically centered around y=75% — guaranteed multi-line behavior independent of font/expansion quirks. Tightened MAX_CHARS_PER_LINE from 35 → 32 (better fit at fontsize=42) and bumped LINE_SPACING from 8 → 12. Verified visually on Joyce's hook scene (`ab8bf1d4`): "Today I chose to just be." renders cleanly as a single centered line; longer narrations wrap properly.
+
+### [ADDED]
+
+**TopView Seedance text-to-video eval with character bible.** `scripts/eval_topview_joyce_heart.py` runs Joyce's "Heart for Fun" episode (6 scenes) through TopView's Seedance 1.5 Pro t2v API with a hand-curated character bible prepended to every scene's `visual_description`. Output is a side-by-side comparison set the writer can review for character consistency before we commit to wiring TopView as a production animation provider. Reference implementation for the broader character-bible pattern noted in `docs/Testing_Checklist.md`.
+
+**Polishing matrix in [docs/Testing_Checklist.md](Testing_Checklist.md)** — visual style × image provider grid, animation provider comparison, voice-preset listing, caption render cases, character-consistency strategy. First documented finding: the Watercolor visual preset on Stability AI produces inconsistent character renders + duplicate-object hallucinations (verified on Joyce's "Heart for Fun" — two red balls in the same frame). Test the same preset on Nanobanana 2 before retiring it.
+
+---
+
 ## [0.6.2] — 2026-04-27
 
 ### [ADDED]

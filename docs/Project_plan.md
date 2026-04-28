@@ -163,6 +163,11 @@ YouTube URL → POST /youtube/import
 | 4 | E2E tests | Playwright: story → breakdown → style → generate → preview | Medium |
 | 5 | API tests | pytest for all backend endpoints | Medium |
 | 6 | Performance | Image lazy loading, skeleton states | Low |
+| 7 | Character consistency strategy | Auto-extract character bible from story via Claude, prepend to each scene's image/animation prompt. Reference: scripts/eval_topview_joyce_heart.py | High — biggest quality lever per 2026-04-27 finding |
+| 8 | Watercolor preset audit | Watercolor on Stability AI hallucinated duplicate objects (Joyce "Heart for Fun"). Try same preset on Nanobanana 2 before retiring. Track via Testing_Checklist polishing matrix | Medium |
+| 9 | Image regen idempotency | run_full_pipeline currently regenerates images on every retrigger, leaving duplicate VideoAsset rows (composer takes the latest). Skip image-gen when scene already has an active image asset to save credits | Medium |
+| 10 | Persistent preview MP4 | Wire frontend `<video>` to /api/v1/episodes/{id}/download/video?inline=1. **Done 2026-04-27 (v0.6.2)** | — |
+| 11 | Caption multi-line render | Per-line drawtext to escape ffmpeg \\n quirk. **Done 2026-04-27 (v0.6.3)** | — |
 
 ---
 
@@ -231,6 +236,10 @@ See [Enhancements.md](./Enhancements.md).
 | 2026-03-25 | Monorepo structure (frontend/backend/remotion) | Simpler CI, shared types later |
 | 2026-04-23 | Replace Remotion sidecar with ffmpeg pipeline | Worker container can install ffmpeg via apt; eliminates Node.js dependency in the Python worker; render verified end-to-end |
 | 2026-04-26 | Backend fetches user profile from Clerk Backend API on auth | Clerk JWTs don't include email by default; synthetic emails were polluting the user table |
+| 2026-04-27 | Final video bytes persist in Postgres (LargeBinary), not worker /tmp | /tmp wiped on every redeploy; `final_video_url` was a worker-local path the browser couldn't load |
+| 2026-04-27 | Captions emit one drawtext filter per wrapped line | ffmpeg `\\n` interpretation in drawtext is unreliable; per-line filters guarantee multi-line behavior |
+| 2026-04-27 | Pursue character bible (story-extracted) over per-character UI step | Lower friction for non-technical writers; Claude can extract a draft, writer edits if needed |
+| 2026-04-27 | Seedance 1.5 Pro picked as the lead t2v candidate for Movie Lite tier | Phase 0 eval showed strong quality at ~10× lower cost than Kling 2.6 |
 | 2026-03-26 | Combined landing page + app (not separate sites) | MVP speed, single deploy |
 | 2026-03-28 | Store assets as LargeBinary in Postgres (not S3) | Simpler for MVP, migrate to S3 later |
 | 2026-03-28 | Railway for all services (not Vercel + Fly) | Single platform, simpler ops |
