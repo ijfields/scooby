@@ -368,6 +368,16 @@ def _burn_captions(
     drawtext_filters = []
     offset_sec = 0.0
 
+    # Caption rendering: emit one drawtext filter PER LINE rather than relying
+    # on '\n' inside a single drawtext text= argument. ffmpeg's drawtext
+    # interpretation of '\n' depends on expansion mode + font shaping and
+    # silently degrades to single-line truncation in many environments.
+    # Per-line filters with manual y-offsets are guaranteed multi-line.
+    FONT_SIZE = 42
+    LINE_SPACING = 12
+    LINE_HEIGHT = FONT_SIZE + LINE_SPACING
+    MAX_CHARS_PER_LINE = 32  # tuned for fontsize=42 at 1080px width
+
     for spec, dur in zip(scene_specs, scene_durations):
         for caption in spec.get("captions", []):
             text = caption.get("text", "")
@@ -383,32 +393,36 @@ def _burn_captions(
                 .replace("\n", " ")
             )
 
-            # Wrap long text (max ~35 chars per line for 1080px width)
             words = text.split()
-            lines = []
+            lines: list[str] = []
             current_line = ""
             for word in words:
-                if len(current_line) + len(word) + 1 > 35:
-                    lines.append(current_line)
+                if len(current_line) + len(word) + 1 > MAX_CHARS_PER_LINE:
+                    if current_line:
+                        lines.append(current_line)
                     current_line = word
                 else:
                     current_line = f"{current_line} {word}" if current_line else word
             if current_line:
                 lines.append(current_line)
-            wrapped_text = "\\n".join(lines)
 
             start_t = offset_sec + caption.get("startFrame", 15) / FPS
             end_t = offset_sec + caption.get("endFrame", int(dur * FPS) - 5) / FPS
 
-            drawtext_filters.append(
-                f"drawtext=text='{wrapped_text}':"
-                f"fontfile='{font_path}':"
-                f"fontsize=42:fontcolor=white:"
-                f"borderw=3:bordercolor=black:"
-                f"x=(w-text_w)/2:y=h*0.75-text_h/2:"
-                f"line_spacing=8:"
-                f"enable='between(t,{start_t:.2f},{end_t:.2f})'"
-            )
+            # Center the block of N lines around y = 75% of frame height.
+            n = len(lines)
+            for i, line in enumerate(lines):
+                # i-th line offset from the block center, in line-heights
+                offset_from_center = (i - (n - 1) / 2)
+                drawtext_filters.append(
+                    f"drawtext=text='{line}':"
+                    f"fontfile='{font_path}':"
+                    f"fontsize={FONT_SIZE}:fontcolor=white:"
+                    f"borderw=3:bordercolor=black:"
+                    f"x=(w-text_w)/2:"
+                    f"y=h*0.75 + ({offset_from_center})*{LINE_HEIGHT} - text_h/2:"
+                    f"enable='between(t,{start_t:.2f},{end_t:.2f})'"
+                )
 
         offset_sec += dur
 
