@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.5] — 2026-04-30
+
+### [INFRA]
+
+**Production switched to Nanobanana 2 as the primary image provider.** Local `.env` had `IMAGE_PROVIDER=nanobanana2` set, but Railway's backend + worker services had no override, so production was defaulting to `stability` while local dev was on NB2. This divergence surfaced when Stability AI returned a 429 mid-generation (rate limit, not credit exhaustion — balance was 923 credits at the time). Aligned both Railway services with the local config: `GOOGLE_API_KEY` + `IMAGE_PROVIDER=nanobanana2` set on backend and worker. NB2 has a more generous free quota (Gemini family), avoiding the rate-limit class of failure for now.
+
+**Lesson for the polishing matrix:** when adding a new pluggable provider, also add a documented baseline for which provider is active in each environment (local / production). Currently the source of truth is the active env var; the running config isn't surfaced in the UI or any health endpoint, which makes debugging "which provider rendered this image?" harder than it should be.
+
+---
+
 ## [0.6.4] — 2026-04-29
 
 ### [ADDED]
