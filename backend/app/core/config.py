@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     ELEVENLABS_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""       # Nanobanana 2 / Gemini image generation
     WAVESPEED_API_KEY: str = ""    # Kling 3.0 image-to-video via WaveSpeed
+    TOPVIEW_API_KEY: str = ""      # TopView (image gen + video gen aggregator)
+    TOPVIEW_UID: str = ""          # TopView account user ID (header alongside the API key)
 
     # Generation providers (pluggable — swap models via config)
     IMAGE_PROVIDER: str = "stability"       # stability | nanobanana2

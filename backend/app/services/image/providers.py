@@ -86,11 +86,72 @@ class NanoBanana2Provider:
         )
 
 
+class _TopViewProviderBase:
+    """Common base for the TopView-routed image providers. Each subclass
+    fixes a specific TopView model display name and (optionally) whether
+    that model takes a `resolution` parameter."""
+
+    name = "topview"
+    model_display_name = ""
+    pass_resolution = True
+
+    def generate(
+        self,
+        prompt: str,
+        style_suffix: str = "",
+        negative_prompt: str = "",
+        cfg_scale: int = 7,
+        width: int = 768,
+        height: int = 1344,
+    ) -> bytes:
+        from app.services.image.topview import generate_image_topview
+
+        return generate_image_topview(
+            model_display_name=self.model_display_name,
+            prompt=prompt,
+            style_suffix=style_suffix,
+            negative_prompt=negative_prompt,
+            width=width,
+            height=height,
+            pass_resolution=self.pass_resolution,
+        )
+
+
+class TopViewNanoBanana2Provider(_TopViewProviderBase):
+    """Nano Banana 2 via TopView. Same Google model as `nanobanana2` but
+    routed through TopView's billing — sidesteps Google AI Studio
+    prepayment exhaustion. Cheapest at 1K (0.40 credits/image)."""
+    name = "topview_nano_banana_2"
+    model_display_name = "Nano Banana 2"
+    pass_resolution = True
+
+
+class TopViewNanoBananaProProvider(_TopViewProviderBase):
+    """Nano Banana Pro (Gemini 3.0 Pro) via TopView. Higher quality than
+    Nano Banana 2, ~2× the cost (0.80 credits/image at 1K). Use for
+    premium tiers or when image quality is the bottleneck."""
+    name = "topview_nano_banana_pro"
+    model_display_name = "Nano Banana Pro"
+    pass_resolution = True
+
+
+class TopViewImagen4Provider(_TopViewProviderBase):
+    """Google Imagen 4 via TopView. Flat 0.50 credits/image, no
+    resolution parameter (the model picks). Decent fallback if both
+    Nano Banana variants are unavailable."""
+    name = "topview_imagen_4"
+    model_display_name = "Imagen 4"
+    pass_resolution = False
+
+
 # ── Registry ─────────────────────────────────────────────────────────
 # To add a new provider: create the class above, add it here.
 IMAGE_PROVIDERS: dict[str, ImageProvider] = {
     "stability": StabilityProvider(),
     "nanobanana2": NanoBanana2Provider(),
+    "topview_nano_banana_2": TopViewNanoBanana2Provider(),
+    "topview_nano_banana_pro": TopViewNanoBananaProProvider(),
+    "topview_imagen_4": TopViewImagen4Provider(),
 }
 
 
