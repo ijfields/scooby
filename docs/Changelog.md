@@ -8,11 +8,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ## [0.6.5] — 2026-04-30
 
+### [ADDED]
+
+**TopView image provider — same Google models, different bill.** New module `backend/app/services/image/topview.py` plus three concrete provider classes registered in `IMAGE_PROVIDERS`:
+- `topview_nano_banana_2` (Gemini-class, ~0.40 credits / 1K image)
+- `topview_nano_banana_pro` (Gemini 3.0 Pro, ~0.80 credits / 1K)
+- `topview_imagen_4` (~0.50 credits flat)
+
+Submits to `POST /v1/common_task/text2image/task/submit`, polls `GET …/text2image/task/query` (4s interval, 5min timeout), downloads the resulting image bytes. `TOPVIEW_API_KEY` + `TOPVIEW_UID` are now first-class settings in `app/core/config.py` (the eval scripts had been reading them from `os.environ` directly).
+
+Production switched to `topview_nano_banana_2` immediately on deploy — same Google models we wanted, but routed through TopView's funded credits instead of Google AI Studio's depleted prepay pool. Smoke test: 9:16 photorealistic kitchen scene generated cleanly, ~114s wall time, 3.2 MB image. Two users currently on the system (Ingrid + Joyce), so a hot-switch with no canary was acceptable here.
+
 ### [INFRA]
 
-**Production switched to Nanobanana 2 as the primary image provider.** Local `.env` had `IMAGE_PROVIDER=nanobanana2` set, but Railway's backend + worker services had no override, so production was defaulting to `stability` while local dev was on NB2. This divergence surfaced when Stability AI returned a 429 mid-generation (rate limit, not credit exhaustion — balance was 923 credits at the time). Aligned both Railway services with the local config: `GOOGLE_API_KEY` + `IMAGE_PROVIDER=nanobanana2` set on backend and worker. NB2 has a more generous free quota (Gemini family), avoiding the rate-limit class of failure for now.
+**Provider toggle history this session** — `stability` (default) → `nanobanana2` (local config) on a Stability 429 rate limit, then back to `stability` when NB2 hit Google AI Studio prepayment depletion, then to `topview_nano_banana_2` once the new TopView provider was built. End state is the TopView-routed NB2.
 
-**Lesson for the polishing matrix:** when adding a new pluggable provider, also add a documented baseline for which provider is active in each environment (local / production). Currently the source of truth is the active env var; the running config isn't surfaced in the UI or any health endpoint, which makes debugging "which provider rendered this image?" harder than it should be.
+**Lessons for the polishing matrix:**
+- When a pluggable provider is added, document baseline config per environment (local vs production). Source of truth is the active env var; running config isn't surfaced in the UI or any health endpoint, which makes debugging "which provider rendered this image?" harder than it should be.
+- Provider failover (try secondary on 429/5xx from primary) is a real reliability gap — both Google direct and Stability had failure modes today that would have been recoverable with automatic fallback. With three TopView-routed providers + Stability + NB2 direct now in the registry, fallback is also a richer option (e.g., topview_nano_banana_2 → topview_imagen_4 → stability).
+- TopView's per-image-task `status` comes back uppercase ("SUCCESS") even though the parent task uses lowercase ("success") — case-insensitive comparisons throughout the polling helper.
 
 ---
 
