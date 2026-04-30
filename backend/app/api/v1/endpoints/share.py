@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import io
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import undefer
 
 from app.api.deps import get_db
 from app.core.auth import get_current_user
@@ -61,6 +64,8 @@ class SharedPreviewResponse(BaseModel):
     target_duration_sec: int
     scenes: list[SharedScene]
     attribution: AttributionInfo | None = None
+    final_video_size_bytes: int | None = None
+    final_video_mime_type: str | None = None
 
 
 # --- Authenticated: create/manage share links ---
@@ -200,4 +205,50 @@ async def get_shared_preview(
         target_duration_sec=episode.target_duration_sec,
         scenes=shared_scenes,
         attribution=attribution,
+        final_video_size_bytes=episode.final_video_size_bytes,
+        final_video_mime_type=episode.final_video_mime_type,
+    )
+
+
+@router.get("/shared/{token}/video")
+async def get_shared_video(
+    token: str,
+    inline: bool = Query(default=True, description="Content-Disposition: inline (default) for in-browser <video>, attachment to force download"),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Stream the final rendered MP4 for a shared episode. No authentication —
+    the share token is the credential. Mirrors /episodes/{id}/download/video
+    but accepts a share token instead of a Clerk JWT."""
+    result = await db.execute(
+        select(ShareToken).where(ShareToken.token == token)
+    )
+    share_token = result.scalar_one_or_none()
+    if share_token is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share link not found")
+    if share_token.expires_at and share_token.expires_at < datetime.now(share_token.expires_at.tzinfo):
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Share link has expired")
+
+    ep_result = await db.execute(
+        select(Episode)
+        .where(Episode.id == share_token.episode_id)
+        .options(undefer(Episode.final_video_data))
+    )
+    episode = ep_result.scalar_one_or_none()
+    if episode is None or not episode.final_video_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No rendered video available for this share link",
+        )
+
+    title_slug = (episode.title or "video").lower().replace(" ", "-")[:30]
+    disposition = "inline" if inline else "attachment"
+    return StreamingResponse(
+        io.BytesIO(episode.final_video_data),
+        media_type=episode.final_video_mime_type or "video/mp4",
+        headers={
+            "Content-Length": str(episode.final_video_size_bytes or len(episode.final_video_data)),
+            "Content-Disposition": f'{disposition}; filename="{title_slug}.mp4"',
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "private, max-age=300",
+        },
     )

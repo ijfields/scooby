@@ -19,6 +19,8 @@ interface SharedPreview {
   target_duration_sec: number;
   scenes: SceneWithAssets[];
   attribution: Attribution | null;
+  final_video_size_bytes: number | null;
+  final_video_mime_type: string | null;
 }
 
 export default function SharedPreviewPage() {
@@ -26,6 +28,8 @@ export default function SharedPreviewPage() {
   const [preview, setPreview] = useState<SharedPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -45,6 +49,34 @@ export default function SharedPreviewPage() {
     }
     load();
   }, [token]);
+
+  // Fetch the rendered MP4 as a blob when available. The share endpoint is
+  // public — no auth header required, just the token in the URL.
+  useEffect(() => {
+    if (!preview?.final_video_size_bytes) return;
+    let cancelled = false;
+    let createdUrl: string | null = null;
+    async function loadVideo() {
+      setVideoLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/shared/${token}/video?inline=1`);
+        if (!res.ok) throw new Error("Failed to load video");
+        const blob = await res.blob();
+        if (cancelled) return;
+        createdUrl = URL.createObjectURL(blob);
+        setVideoBlobUrl(createdUrl);
+      } catch (err) {
+        console.error("Shared video load failed:", err);
+      } finally {
+        if (!cancelled) setVideoLoading(false);
+      }
+    }
+    loadVideo();
+    return () => {
+      cancelled = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [preview?.final_video_size_bytes, token]);
 
   if (loading) {
     return (
@@ -120,7 +152,36 @@ export default function SharedPreviewPage() {
           </div>
         )}
 
-        {/* Player */}
+        {/* Final rendered video (if available) — slideshow stays as a fallback */}
+        {preview.final_video_size_bytes ? (
+          <div className="mb-6">
+            {videoLoading && !videoBlobUrl ? (
+              <div className="flex aspect-[9/16] max-h-[80vh] w-full items-center justify-center rounded-lg border bg-muted">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="text-sm text-muted-foreground">
+                    Loading video ({Math.round(preview.final_video_size_bytes / 1024 / 1024)}MB)...
+                  </p>
+                </div>
+              </div>
+            ) : videoBlobUrl ? (
+              <video
+                src={videoBlobUrl}
+                controls
+                playsInline
+                autoPlay={false}
+                className="mx-auto aspect-[9/16] max-h-[80vh] w-full max-w-[450px] rounded-lg border bg-black"
+              />
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Scene-by-scene slideshow */}
+        {preview.final_video_size_bytes ? (
+          <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+            Scene-by-scene preview
+          </h2>
+        ) : null}
         <ScenePlayer scenes={preview.scenes} title={preview.title} />
 
         {/* CTA */}

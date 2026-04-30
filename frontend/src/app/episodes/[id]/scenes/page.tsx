@@ -24,6 +24,15 @@ interface Episode {
   target_duration_sec: number;
 }
 
+interface GenerationJob {
+  id: string;
+  job_type: string;
+  status: string;
+  stage: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
 const BEAT_COLORS: Record<string, string> = {
   hook: "bg-red-100 text-red-800",
   setup: "bg-blue-100 text-blue-800",
@@ -42,26 +51,45 @@ export default function SceneEditorPage() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
+  const [breakdownError, setBreakdownError] = useState<string | null>(null);
   const saveTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const loadData = useCallback(async () => {
     try {
       const token = await getToken();
-      const [ep, sc] = await Promise.all([
+      const [ep, sc, jobs] = await Promise.all([
         apiFetch<Episode>(`/api/v1/episodes/${episodeId}`, {
           token: token ?? undefined,
         }),
         apiFetch<Scene[]>(`/api/v1/episodes/${episodeId}/scenes`, {
           token: token ?? undefined,
         }),
+        apiFetch<GenerationJob[]>(`/api/v1/episodes/${episodeId}/jobs`, {
+          token: token ?? undefined,
+        }).catch(() => [] as GenerationJob[]),
       ]);
       setEpisode(ep);
       setScenes(sc);
 
+      // Decide whether to keep polling. Three relevant states:
+      //   - breakdown succeeded -> scenes will be loaded; stop polling
+      //   - breakdown failed   -> show the error so the user isn't stuck on a spinner
+      //   - breakdown still running (or never started) -> keep polling
       if (ep.status === "draft" && sc.length === 0) {
-        setPolling(true);
+        const breakdownJob = jobs.find((j) => j.job_type === "scene_breakdown");
+        if (breakdownJob?.status === "failed") {
+          setPolling(false);
+          setBreakdownError(
+            breakdownJob.error_message ||
+              "The scene breakdown failed. Please try again or contact support.",
+          );
+        } else {
+          setPolling(true);
+          setBreakdownError(null);
+        }
       } else {
         setPolling(false);
+        setBreakdownError(null);
       }
     } catch {
       router.push("/stories");
@@ -136,6 +164,30 @@ export default function SceneEditorPage() {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
         <p className="text-muted-foreground">Loading scenes...</p>
+      </div>
+    );
+  }
+
+  if (breakdownError) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-20 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-3xl">
+          !
+        </div>
+        <h2 className="text-xl font-bold">Scene breakdown failed</h2>
+        <p className="text-sm text-muted-foreground">{breakdownError}</p>
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" onClick={() => router.push("/stories")}>
+            Back to Stories
+          </Button>
+          <Button
+            onClick={() => router.push(`/stories/${episode?.id ? "" : ""}`)}
+            disabled
+            title="Retry coming soon"
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }

@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.4] — 2026-04-29
+
+### [ADDED]
+
+**Public share link with `<video>` player.** The shared preview page (`/share/{token}`) now renders the rendered MP4 above the slideshow when one exists. New backend endpoint `GET /api/v1/shared/{token}/video?inline=1` streams the bytes from Postgres using only the share token as the credential — no Clerk JWT required, so anyone with the link can watch the final video. `SharedPreviewResponse` exposes `final_video_size_bytes` + `final_video_mime_type` so the frontend knows when to show the player.
+
+This unblocks sending review links to non-Scooby users (e.g., the writer cofounder's friends, agents, social testers) without forcing them through sign-up.
+
+### [FIXED]
+
+**Scenes page polled forever when scene breakdown failed.** [scenes/page.tsx](frontend/src/app/episodes/[id]/scenes/page.tsx) checked `episode.status === 'draft' && scenes.length === 0` and started a 3-second poll loop that never inspected the underlying `GenerationJob.status`. Episodes whose Claude breakdown failed (e.g., depleted Anthropic credits, transient errors) were stuck on a spinner indefinitely with no way to know the job had errored. Now the page also fetches `/api/v1/episodes/{id}/jobs` on each poll, and if the latest `scene_breakdown` job is in `failed` state it stops polling and shows the error message + a way back to stories. Real example surfacing this: episode `7eda8b61` ("I'm gonna tell it") had been stuck since 2026-04-02 — its breakdown failed with "Your credit balance is too low to access the Anthropic API" but the UI had no way to surface that.
+
+---
+
 ## [0.6.3] — 2026-04-27
 
 ### [FIXED]
