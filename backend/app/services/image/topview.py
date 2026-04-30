@@ -112,13 +112,17 @@ def _poll(task_id: str) -> dict:
         )
         resp.raise_for_status()
         result = resp.json().get("result", {})
-        status = result.get("status", "unknown")
+        # TopView's API returns status in mixed case (parent comes back
+        # 'success' lowercase per docs, but per-image sub-tasks come back
+        # 'SUCCESS' uppercase). Normalize.
+        status = (result.get("status") or "").lower()
         if status == "success":
             images = result.get("images") or []
             if not images:
                 raise RuntimeError(f"TopView returned no images: {result}")
             img = images[0]
-            if img.get("status") != "success" or not img.get("filePath"):
+            img_status = (img.get("status") or "").lower()
+            if img_status != "success" or not img.get("filePath"):
                 raise RuntimeError(f"TopView image failed: {img}")
             return img
         if status == "fail":
