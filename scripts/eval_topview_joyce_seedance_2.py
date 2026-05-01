@@ -77,11 +77,18 @@ SCENES = [
     },
     {
         "n": 3, "beat": "escalation_1", "duration": 5,
+        # Story-faithful rewrite: Joyce is hobbling toward the ball when the
+        # second one drops. Earlier prompt focused only on the kid at the
+        # fence and triggered the TopView API error
+        # "InputImage 'Image1' is not referenced in prompt" because every
+        # uploaded ref must appear in the prompt. Putting Joyce back in
+        # frame fixes the API error AND matches the narration arc.
         "prompt": (
-            "Wide shot: a young girl at a chain-link fence pointing toward "
-            "the street, her face full of hope. Behind her, kids on a "
-            "playground. Another colorful ball bounces into the road behind "
-            "the first red one. Daytime, cinematic. Vertical 9:16."
+            "Wide shot: <<<Image1>>> hobbles toward a red ball lying at the "
+            "street curb. A young girl on the playground side of a "
+            "chain-link fence points desperately toward another colorful "
+            "ball that has just bounced into the road behind the first. "
+            "Daytime, cinematic. Vertical 9:16."
         ),
     },
     {
@@ -214,8 +221,12 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true",
                         help="print prompts only; don't call the API")
     parser.add_argument("--scene", type=int, help="generate only scene N (1-6)")
-    parser.add_argument("--model", default="Seedance 2.0 Standard",
-                        help="Seedance 2.0 Standard (default) or Seedance 2.0 Fast")
+    parser.add_argument("--model", default="Standard",
+                        help='Omni Reference model display name. "Standard" '
+                             '(Seedance 2.0 Standard, default) or "Fast" '
+                             '(Seedance 2.0 Fast). The "Seedance 2.0 " prefix '
+                             'is implicit since the endpoint itself is the '
+                             'Seedance 2.0 endpoint.')
     args = parser.parse_args()
 
     out_dir = Path("test_generations/joyce_heart_seedance_2_omni")
