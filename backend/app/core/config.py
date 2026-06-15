@@ -65,6 +65,14 @@ class Settings(BaseSettings):
     MAX_EPISODES_PER_USER_DAY: int = 10
     MAX_STORY_LENGTH_CHARS: int = 5000
 
+    # Admin — comma-separated emails allowed to view the providers/costs page.
+    # Empty = no one (admin endpoints locked down by default in prod).
+    ADMIN_EMAILS: str = ""
+
+    @property
+    def admin_emails_list(self) -> list[str]:
+        return [e.strip().lower() for e in self.ADMIN_EMAILS.split(",") if e.strip()]
+
     @property
     def DATABASE_URL_ASYNC(self) -> str:
         """Async driver URL for SQLAlchemy async engine."""

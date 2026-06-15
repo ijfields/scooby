@@ -24,6 +24,14 @@ Local `.env` set to `IMAGE_PROVIDER=topview_nano_banana_2` with `IMAGE_PROVIDER_
 - Frontend: per-scene spinner → polls the job → swaps the thumbnail on completion, shows the friendly error on failure.
 - The card spells out that **the image comes from the Visual Description, and Narration only affects the voiceover** — directly addressing the "I edited the hook text and the picture didn't change" confusion.
 
+**Admin providers & costs page (`/admin/providers`).** Email-allow-listed (`ADMIN_EMAILS`) page showing, for every image/animation provider: vendor, cost model (pay-per-use vs subscription+credits), approx price, **live account balance**, and **real assets-generated count** (aggregated from asset metadata). Live balances are pulled from each vendor's billing API:
+- Stability — `GET /v1/user/balance` (credits) ✓
+- TopView — `GET /user/credit/detail` (credits, needs `Topview-Uid`) ✓
+- WaveSpeed — `GET /api/v3/balance` (USD) ✓ *(endpoint integrated; the current key returns 401 — likely expired/invalid)*
+- Google AI Studio — no balance API; shown as "manage in Google Cloud Console"
+
+New `app/services/billing.py` (httpx-only, unit-tested) + `app/api/v1/endpoints/admin.py`. Verified live: Stability 922.4 credits, TopView 159.2 credits.
+
 ### [FIXED]
 
 **Local image generation was silently failing.** Local `.env` still pinned `IMAGE_PROVIDER=nanobanana2` (direct Google AI Studio), whose prepay has been depleted since 2026-04-30 and still 429s as of today — so every local render failed at the image step, the pipeline aborted, and the previously-rendered MP4 kept being served (looked like "regeneration did nothing"). Switched local to the TopView-routed provider + Stability fallback.
