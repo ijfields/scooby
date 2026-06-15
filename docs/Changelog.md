@@ -36,6 +36,8 @@ New `app/services/billing.py` (httpx-only, unit-tested) + `app/api/v1/endpoints/
 
 **Local image generation was silently failing.** Local `.env` still pinned `IMAGE_PROVIDER=nanobanana2` (direct Google AI Studio), whose prepay has been depleted since 2026-04-30 and still 429s as of today — so every local render failed at the image step, the pipeline aborted, and the previously-rendered MP4 kept being served (looked like "regeneration did nothing"). Switched local to the TopView-routed provider + Stability fallback.
 
+**Video animation (Kling) was wired to an unreachable image URL.** `generate_animations_task` built the scene-image URL from `ALLOWED_ORIGINS[0]` (the *frontend* origin), but asset files are served by the *backend* — so WaveSpeed/Kling would fetch a 404 and animation could never have worked. Now uses a new `BACKEND_PUBLIC_URL` setting (must be the internet-reachable backend URL; the task hard-skips with a clear log if it's unset or localhost, since Kling can't fetch local images). Also fixed two latent bugs in the same loop: the image-asset lookup used `scalar_one_or_none()` with no `is_active` filter (would raise `MultipleResultsFound` once a scene had a regenerated image) — now takes the latest active image; and the motion prompt read a non-existent `beat_type` attr — now reads `beat_label`. **Kling remains validate-after-deploy** (can't run against localhost). Note: the current `WAVESPEED_API_KEY` returns 401 and likely needs to be reissued before Kling will work.
+
 ---
 
 ## [0.6.6] — 2026-06-15

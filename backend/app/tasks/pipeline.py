@@ -265,20 +265,36 @@ def generate_animations_task(self, episode_id: str) -> dict:
         for i, scene in enumerate(scenes):
             # Find the scene's image asset to animate
             image_asset = session.execute(
-                select(VideoAsset).where(
+                select(VideoAsset)
+                .where(
                     VideoAsset.scene_id == scene.id,
                     VideoAsset.asset_type == "image",
+                    VideoAsset.is_active.is_(True),
+                    VideoAsset.file_data.isnot(None),
                 )
+                .order_by(VideoAsset.created_at.desc())
+                .limit(1)
             ).scalar_one_or_none()
 
             if not image_asset:
                 logger.warning("No image asset for scene %s — skipping animation", scene.id)
                 continue
 
-            # Build a public URL for the image (WaveSpeed needs an accessible URL)
-            image_url = f"{settings.ALLOWED_ORIGINS.split(',')[0].strip()}/api/v1/assets/{image_asset.id}/file"
+            # Build a public URL for the image. WaveSpeed/Kling fetches it over
+            # the internet, so it must point at THIS backend's public URL —
+            # not the frontend origin and not localhost.
+            backend_base = (settings.BACKEND_PUBLIC_URL or "").rstrip("/")
+            if not backend_base or "localhost" in backend_base or "127.0.0.1" in backend_base:
+                logger.error(
+                    "BACKEND_PUBLIC_URL is unset or local (%r) — Kling cannot fetch "
+                    "scene images; skipping animation for episode %s. Set it to the "
+                    "deployed backend URL.", backend_base or None, episode_id,
+                )
+                break
+            image_url = f"{backend_base}/api/v1/assets/{image_asset.id}/file"
 
-            # Build animation prompt from visual description + beat type
+            # Build animation prompt from visual description + beat type.
+            # Scene carries `beat_label` (hook/setup/escalation_1.../climax/button).
             beat_motions = {
                 "hook": "slow dramatic zoom in, atmospheric lighting",
                 "setup": "gentle pan across scene, establishing shot",
@@ -286,8 +302,8 @@ def generate_animations_task(self, episode_id: str) -> dict:
                 "climax": "dynamic camera movement, dramatic lighting shift",
                 "button": "slow pull back, fading atmosphere",
             }
-            beat_type = getattr(scene, "beat_type", None) or "setup"
-            motion = beat_motions.get(beat_type, "subtle camera movement")
+            beat_label = (getattr(scene, "beat_label", None) or "setup").split("_")[0]
+            motion = beat_motions.get(beat_label, "subtle camera movement")
             animation_prompt = f"{scene.visual_description}. Camera: {motion}."
 
             logger.info(

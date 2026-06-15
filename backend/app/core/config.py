@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-to-a-real-secret-in-production"
     ALLOWED_ORIGINS: str = "http://localhost:3001,http://localhost:3000"
     LOG_LEVEL: str = "DEBUG"
+    # Public, internet-reachable base URL of THIS backend (e.g.
+    # https://backend-production-xxxx.up.railway.app). Required for video
+    # animation: WaveSpeed/Kling fetches scene images over the internet, so the
+    # asset URL must point at the backend (not the frontend, not localhost).
+    BACKEND_PUBLIC_URL: str = ""
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://scooby:scooby_dev@localhost:5433/scooby"

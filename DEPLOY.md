@@ -111,6 +111,7 @@ REDIS_URL=redis://default:<password>@<redis-host>.railway.internal:6379
 CELERY_BROKER_URL=redis://default:<password>@<redis-host>.railway.internal:6379
 CELERY_RESULT_BACKEND=redis://default:<password>@<redis-host>.railway.internal:6379
 ALLOWED_ORIGINS=http://localhost:3001,http://localhost:3000,https://<frontend-domain>.up.railway.app
+BACKEND_PUBLIC_URL=https://<backend-domain>.up.railway.app   # required for video animation (Kling fetches images from here)
 CLERK_ISSUER_URL=https://<your-clerk-instance>.clerk.accounts.dev
 CLERK_SECRET_KEY=sk_test_...        # required: backend calls Clerk Backend API to fetch user email/name/avatar
 ANTHROPIC_API_KEY=sk-ant-...
@@ -118,6 +119,9 @@ STABILITY_API_KEY=sk-...
 ELEVENLABS_API_KEY=sk_...
 SECRET_KEY=<generate-a-strong-random-string>
 ENV=production
+IMAGE_PROVIDER=topview_nano_banana_2     # direct nanobanana2's Google prepay is depleted
+IMAGE_PROVIDER_FALLBACKS=stability       # always-on backstop (pay-per-image)
+ADMIN_EMAILS=you@example.com             # who can see /admin/providers
 ```
 
 ### Worker Variables
@@ -126,6 +130,8 @@ Same as backend except: no `ALLOWED_ORIGINS`, no `CLERK_ISSUER_URL`. Must includ
 - `DATABASE_URL`, `REDIS_URL`, `CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`
 - `ANTHROPIC_API_KEY`, `STABILITY_API_KEY`, `ELEVENLABS_API_KEY`
 - `SECRET_KEY`, `ENV=production`
+- `IMAGE_PROVIDER`, `IMAGE_PROVIDER_FALLBACKS` (so the worker pipeline uses the same providers)
+- `BACKEND_PUBLIC_URL` + `WAVESPEED_API_KEY` + `VIDEO_ANIMATION_PROVIDER` (only if using Kling video animation)
 
 ### Frontend Variables
 
