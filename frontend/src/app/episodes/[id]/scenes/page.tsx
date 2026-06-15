@@ -6,6 +6,8 @@ import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface Scene {
   id: string;
   episode_id: string;
@@ -15,6 +17,17 @@ interface Scene {
   narration_text: string | null;
   dialogue_text: string | null;
   duration_sec: number | null;
+  image_url?: string | null;
+}
+
+interface SceneAsset {
+  asset_type: string;
+  url: string;
+}
+
+interface SceneWithAssets {
+  id: string;
+  assets: SceneAsset[];
 }
 
 interface Episode {
@@ -52,7 +65,30 @@ export default function SceneEditorPage() {
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
   const [breakdownError, setBreakdownError] = useState<string | null>(null);
+  // Per-scene image regeneration state, keyed by scene id.
+  const [regenerating, setRegenerating] = useState<Record<string, boolean>>({});
+  const [regenError, setRegenError] = useState<Record<string, string>>({});
   const saveTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
+  const loadImages = useCallback(async () => {
+    try {
+      const token = await getToken();
+      const withAssets = await apiFetch<SceneWithAssets[]>(
+        `/api/v1/episodes/${episodeId}/scenes-with-assets`,
+        { token: token ?? undefined },
+      );
+      const urlBySceneId: Record<string, string | null> = {};
+      for (const s of withAssets) {
+        const img = s.assets.find((a) => a.asset_type === "image");
+        urlBySceneId[s.id] = img ? `${API_BASE}${img.url}` : null;
+      }
+      setScenes((prev) =>
+        prev.map((s) => ({ ...s, image_url: urlBySceneId[s.id] ?? null })),
+      );
+    } catch {
+      // No assets yet (e.g. before first generation) — leave thumbnails empty.
+    }
+  }, [episodeId, getToken]);
 
   const loadData = useCallback(async () => {
     try {
@@ -70,6 +106,7 @@ export default function SceneEditorPage() {
       ]);
       setEpisode(ep);
       setScenes(sc);
+      if (sc.length > 0) loadImages();
 
       // Decide whether to keep polling. Three relevant states:
       //   - breakdown succeeded -> scenes will be loaded; stop polling
@@ -96,7 +133,60 @@ export default function SceneEditorPage() {
     } finally {
       setLoading(false);
     }
-  }, [episodeId, getToken, router]);
+  }, [episodeId, getToken, router, loadImages]);
+
+  const regenerateImage = useCallback(
+    async (sceneId: string) => {
+      setRegenError((prev) => {
+        const next = { ...prev };
+        delete next[sceneId];
+        return next;
+      });
+      setRegenerating((prev) => ({ ...prev, [sceneId]: true }));
+      try {
+        const token = await getToken();
+        await apiFetch(
+          `/api/v1/episodes/${episodeId}/scenes/${sceneId}/regenerate-image`,
+          { method: "POST", token: token ?? undefined },
+        );
+
+        // Poll the per-scene job until it finishes (image gen is ~100s).
+        const deadline = Date.now() + 5 * 60 * 1000;
+        while (Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 3000));
+          const jobToken = await getToken();
+          const job = await apiFetch<GenerationJob | null>(
+            `/api/v1/episodes/${episodeId}/scenes/${sceneId}/regenerate-image/status`,
+            { token: jobToken ?? undefined },
+          );
+          if (job?.status === "completed") {
+            await loadImages();
+            return;
+          }
+          if (job?.status === "failed") {
+            setRegenError((prev) => ({
+              ...prev,
+              [sceneId]: job.error_message || "Image regeneration failed.",
+            }));
+            return;
+          }
+        }
+        setRegenError((prev) => ({
+          ...prev,
+          [sceneId]: "Timed out waiting for the new image.",
+        }));
+      } catch (err) {
+        setRegenError((prev) => ({
+          ...prev,
+          [sceneId]:
+            err instanceof Error ? err.message : "Failed to start regeneration.",
+        }));
+      } finally {
+        setRegenerating((prev) => ({ ...prev, [sceneId]: false }));
+      }
+    },
+    [episodeId, getToken, loadImages],
+  );
 
   useEffect(() => {
     loadData();
@@ -279,6 +369,50 @@ export default function SceneEditorPage() {
             </div>
 
             <div className="mt-3 space-y-3">
+              {/* Generated image — driven by the Visual Description below */}
+              <div className="flex items-start gap-3">
+                <div className="relative h-28 w-20 shrink-0 overflow-hidden rounded-lg border bg-muted">
+                  {scene.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={scene.image_url}
+                      alt={`Scene ${scene.scene_order}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-center text-[10px] text-muted-foreground">
+                      No image yet
+                    </div>
+                  )}
+                  {regenerating[scene.id] && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => regenerateImage(scene.id)}
+                    disabled={regenerating[scene.id]}
+                  >
+                    {regenerating[scene.id]
+                      ? "Regenerating…"
+                      : scene.image_url
+                        ? "Regenerate image"
+                        : "Generate image"}
+                  </Button>
+                  <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+                    The image is generated from the <strong>Visual Description</strong>.
+                    Edit that text, then regenerate. Narration only affects the voiceover.
+                  </p>
+                  {regenError[scene.id] && (
+                    <p className="mt-1 text-[11px] text-red-500">{regenError[scene.id]}</p>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-medium text-muted-foreground">
                   Visual Description

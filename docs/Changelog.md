@@ -19,6 +19,11 @@ Local `.env` set to `IMAGE_PROVIDER=topview_nano_banana_2` with `IMAGE_PROVIDER_
 - A failed run no longer drops a previously-rendered episode back to `draft` — it stays `preview_ready` so the prior video is still viewable, with the failure carried by the job.
 - The preview page fetches the latest generation status and shows an amber "your last generation attempt didn't finish — you're seeing the previous version" banner with a retry button, instead of silently presenting the stale render.
 
+**Per-scene image regeneration + thumbnails in the scene editor.** The editor previously showed no images at all, and the only way to change one was to re-run the whole episode. Now each scene card shows its current generated image and a **Regenerate / Generate image** button:
+- Backend: `POST /episodes/{id}/scenes/{scene_id}/regenerate-image` queues a `scene_image` job running the new `regenerate_scene_image_task` (re-generates from the scene's *current* Visual Description, reuses the episode's first frame as the consistency anchor, retires prior images via `is_active=False`, stores the new one). Poll `…/regenerate-image/status`.
+- Frontend: per-scene spinner → polls the job → swaps the thumbnail on completion, shows the friendly error on failure.
+- The card spells out that **the image comes from the Visual Description, and Narration only affects the voiceover** — directly addressing the "I edited the hook text and the picture didn't change" confusion.
+
 ### [FIXED]
 
 **Local image generation was silently failing.** Local `.env` still pinned `IMAGE_PROVIDER=nanobanana2` (direct Google AI Studio), whose prepay has been depleted since 2026-04-30 and still 429s as of today — so every local render failed at the image step, the pipeline aborted, and the previously-rendered MP4 kept being served (looked like "regeneration did nothing"). Switched local to the TopView-routed provider + Stability fallback.

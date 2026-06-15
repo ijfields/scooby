@@ -109,6 +109,132 @@ def generate_images_task(self, episode_id: str) -> dict:
         session.close()
 
 
+@celery_app.task(name="app.tasks.pipeline.regenerate_scene_image", bind=True, max_retries=1)
+def regenerate_scene_image_task(self, scene_id: str, job_id: str) -> dict:
+    """Regenerate the image for a single scene without re-running the whole
+    episode. Deactivates the scene's prior image(s) and stores a fresh one,
+    tracking progress on the given GenerationJob (job_type='scene_image')."""
+    from app.models.episode import Episode
+    from app.models.generation_job import GenerationJob
+    from app.models.scene import Scene
+    from app.models.style_preset import StylePreset
+    from app.models.video_asset import VideoAsset
+    from app.services.generation_errors import friendly_error
+    from app.services.image.providers import generate_image_with_fallback
+
+    session = _get_sync_session()
+    try:
+        job = session.execute(
+            select(GenerationJob).where(GenerationJob.id == job_id)
+        ).scalar_one()
+        job.status = "running"
+        job.stage = "Generating image"
+        job.progress = 10
+        job.started_at = datetime.now(timezone.utc)
+        session.commit()
+
+        scene = session.execute(select(Scene).where(Scene.id == scene_id)).scalar_one()
+        episode = session.execute(
+            select(Episode).where(Episode.id == scene.episode_id)
+        ).scalar_one()
+
+        style_config = {}
+        if episode.visual_style_id:
+            preset = session.execute(
+                select(StylePreset).where(StylePreset.id == episode.visual_style_id)
+            ).scalar_one_or_none()
+            if preset:
+                style_config = preset.config
+
+        # Anchor-frame: condition on the episode's first scene image for
+        # character/style consistency — unless this *is* the first scene.
+        anchor_frame: bytes | None = None
+        first_scene = session.execute(
+            select(Scene)
+            .where(Scene.episode_id == episode.id)
+            .order_by(Scene.scene_order)
+            .limit(1)
+        ).scalar_one_or_none()
+        if first_scene and first_scene.id != scene.id:
+            anchor_asset = session.execute(
+                select(VideoAsset)
+                .where(
+                    VideoAsset.scene_id == first_scene.id,
+                    VideoAsset.asset_type == "image",
+                    VideoAsset.is_active.is_(True),
+                    VideoAsset.file_data.isnot(None),
+                )
+                .order_by(VideoAsset.created_at.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+            if anchor_asset:
+                anchor_frame = anchor_asset.file_data
+
+        image_bytes, used_provider = generate_image_with_fallback(
+            prompt=scene.visual_description,
+            style_suffix=style_config.get("style_prompt_suffix", ""),
+            negative_prompt=style_config.get("negative_prompt", ""),
+            cfg_scale=style_config.get("cfg_scale", 7),
+            reference_images=[anchor_frame] if anchor_frame else None,
+        )
+
+        # Retire the scene's existing image(s) so the latest-active query picks
+        # up the new one (keeps history rather than hard-deleting).
+        prior = (
+            session.execute(
+                select(VideoAsset).where(
+                    VideoAsset.scene_id == scene.id,
+                    VideoAsset.asset_type == "image",
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for a in prior:
+            a.is_active = False
+
+        asset = VideoAsset(
+            scene_id=scene.id,
+            asset_type="image",
+            file_data=image_bytes,
+            file_size_bytes=len(image_bytes),
+            mime_type="image/png",
+            is_active=True,
+            metadata_={
+                "provider": used_provider,
+                "regenerated": True,
+                "anchor_locked": anchor_frame is not None,
+            },
+        )
+        session.add(asset)
+        scene.image_prompt = (
+            f"{scene.visual_description}, {style_config.get('style_prompt_suffix', '')}"
+        )
+
+        job.status = "completed"
+        job.progress = 100
+        job.stage = "Image ready"
+        job.completed_at = datetime.now(timezone.utc)
+        session.commit()
+        return {"scene_id": scene_id, "provider": used_provider}
+
+    except Exception as e:
+        logger.exception("Scene image regeneration failed for scene %s", scene_id)
+        session.rollback()
+        failed = session.execute(
+            select(GenerationJob).where(GenerationJob.id == job_id)
+        ).scalar_one_or_none()
+        if failed:
+            failed.status = "failed"
+            failed.error_message = friendly_error(e)
+            failed.completed_at = datetime.now(timezone.utc)
+            session.commit()
+        raise
+
+    finally:
+        session.close()
+
+
 @celery_app.task(name="app.tasks.pipeline.generate_animations", bind=True, max_retries=1)
 def generate_animations_task(self, episode_id: str) -> dict:
     """Animate scene images into video clips (Movie Lite / Movie Pro tiers).
