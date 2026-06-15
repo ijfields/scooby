@@ -8,10 +8,102 @@ import pytest
 
 from app.services.image.providers import (
     IMAGE_PROVIDERS,
+    AllImageProvidersFailedError,
     NanoBanana2Provider,
     StabilityProvider,
+    generate_image_with_fallback,
     get_image_provider,
+    get_image_provider_chain,
 )
+
+
+class _FakeProvider:
+    """Minimal ImageProvider stand-in for fallback-chain tests."""
+
+    def __init__(self, name, *, fail=False, payload=b"img"):
+        self.name = name
+        self._fail = fail
+        self._payload = payload
+        self.calls = 0
+
+    def generate(self, **kwargs):
+        self.calls += 1
+        if self._fail:
+            raise RuntimeError(f"{self.name} boom")
+        return self._payload
+
+
+class TestImageProviderFallback:
+    """Tests for the provider fallback chain."""
+
+    def _patch(self, primary, fallbacks, registry):
+        s = patch("app.core.config.settings")
+        mock = s.start()
+        mock.IMAGE_PROVIDER = primary
+        mock.image_provider_fallbacks_list = fallbacks
+        reg = patch.dict(
+            "app.services.image.providers.IMAGE_PROVIDERS", registry, clear=True
+        )
+        reg.start()
+        return [s, reg]
+
+    @staticmethod
+    def _stop(patches):
+        for p in patches:
+            p.stop()
+
+    def test_chain_is_primary_then_fallbacks_deduped(self):
+        reg = {"a": _FakeProvider("a"), "b": _FakeProvider("b")}
+        patches = self._patch("a", ["b", "a"], reg)  # 'a' dup should drop
+        try:
+            chain = get_image_provider_chain()
+            assert [p.name for p in chain] == ["a", "b"]
+        finally:
+            self._stop(patches)
+
+    def test_unknown_fallback_skipped(self):
+        reg = {"a": _FakeProvider("a")}
+        patches = self._patch("a", ["does_not_exist"], reg)
+        try:
+            chain = get_image_provider_chain()
+            assert [p.name for p in chain] == ["a"]
+        finally:
+            self._stop(patches)
+
+    def test_primary_success_skips_fallback(self):
+        primary = _FakeProvider("a", payload=b"primary-bytes")
+        backup = _FakeProvider("b")
+        patches = self._patch("a", ["b"], {"a": primary, "b": backup})
+        try:
+            data, used = generate_image_with_fallback(prompt="x")
+            assert data == b"primary-bytes"
+            assert used == "a"
+            assert backup.calls == 0  # never reached
+        finally:
+            self._stop(patches)
+
+    def test_falls_back_on_primary_failure(self):
+        primary = _FakeProvider("a", fail=True)
+        backup = _FakeProvider("b", payload=b"backup-bytes")
+        patches = self._patch("a", ["b"], {"a": primary, "b": backup})
+        try:
+            data, used = generate_image_with_fallback(prompt="x")
+            assert data == b"backup-bytes"
+            assert used == "b"
+            assert primary.calls == 1 and backup.calls == 1
+        finally:
+            self._stop(patches)
+
+    def test_all_fail_raises_with_attempts(self):
+        reg = {"a": _FakeProvider("a", fail=True), "b": _FakeProvider("b", fail=True)}
+        patches = self._patch("a", ["b"], reg)
+        try:
+            with pytest.raises(AllImageProvidersFailedError) as exc:
+                generate_image_with_fallback(prompt="x")
+            names = [n for n, _ in exc.value.attempts]
+            assert names == ["a", "b"]
+        finally:
+            self._stop(patches)
 
 
 class TestProviderRegistry:

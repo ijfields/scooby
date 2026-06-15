@@ -32,8 +32,18 @@ class Settings(BaseSettings):
     TOPVIEW_UID: str = ""          # TopView account user ID (header alongside the API key)
 
     # Generation providers (pluggable — swap models via config)
-    IMAGE_PROVIDER: str = "stability"       # stability | nanobanana2
+    # IMAGE_PROVIDER options: stability | nanobanana2 | topview_nano_banana_2
+    #   | topview_nano_banana_pro | topview_imagen_4
+    IMAGE_PROVIDER: str = "stability"
+    # Ordered, comma-separated providers to try when the primary fails (429/5xx
+    # /quota). Empty = no fallback. The primary is always tried first and is
+    # de-duplicated out of the chain. Example: "topview_imagen_4,stability".
+    IMAGE_PROVIDER_FALLBACKS: str = ""
     VIDEO_ANIMATION_PROVIDER: str = "none"  # none | kling_std | kling_pro
+
+    @property
+    def image_provider_fallbacks_list(self) -> list[str]:
+        return [p.strip() for p in self.IMAGE_PROVIDER_FALLBACKS.split(",") if p.strip()]
 
     # S3
     S3_ENDPOINT_URL: str = ""

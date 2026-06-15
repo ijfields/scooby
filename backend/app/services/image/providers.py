@@ -185,3 +185,86 @@ def get_image_provider(name: str | None = None) -> ImageProvider:
     provider = IMAGE_PROVIDERS[provider_name]
     logger.debug("Using image provider: %s", provider.name)
     return provider
+
+
+class AllImageProvidersFailedError(RuntimeError):
+    """Raised when the primary provider and every fallback fail to generate."""
+
+    def __init__(self, attempts: list[tuple[str, str]]):
+        # attempts: list of (provider_name, error_summary)
+        self.attempts = attempts
+        chain = ", ".join(f"{name} ({err})" for name, err in attempts)
+        super().__init__(f"All image providers failed: {chain}")
+
+
+def get_image_provider_chain(primary: str | None = None) -> list[ImageProvider]:
+    """Ordered providers to attempt: the primary first, then configured
+    fallbacks, de-duplicated. Unknown fallback names are skipped with a warning
+    so a typo in config can't take down generation."""
+    from app.core.config import settings
+
+    primary_name = primary or settings.IMAGE_PROVIDER
+    ordered: list[str] = [primary_name]
+    for name in settings.image_provider_fallbacks_list:
+        if name not in ordered:
+            ordered.append(name)
+
+    chain: list[ImageProvider] = []
+    for name in ordered:
+        provider = IMAGE_PROVIDERS.get(name)
+        if provider is None:
+            logger.warning("Skipping unknown image provider in chain: %s", name)
+            continue
+        chain.append(provider)
+
+    if not chain:
+        raise ValueError(
+            f"No valid image providers resolved from primary='{primary_name}' "
+            f"+ fallbacks={settings.image_provider_fallbacks_list}"
+        )
+    return chain
+
+
+def generate_image_with_fallback(
+    prompt: str,
+    style_suffix: str = "",
+    negative_prompt: str = "",
+    cfg_scale: int = 7,
+    width: int = 768,
+    height: int = 1344,
+    reference_images: list[bytes] | None = None,
+    primary: str | None = None,
+) -> tuple[bytes, str]:
+    """Generate an image, trying the primary provider then each fallback in
+    order. Returns ``(png_bytes, provider_name_used)``.
+
+    Raises ``AllImageProvidersFailedError`` if every provider in the chain
+    fails, with a per-provider error summary for surfacing to the user.
+    """
+    chain = get_image_provider_chain(primary)
+    attempts: list[tuple[str, str]] = []
+
+    for provider in chain:
+        try:
+            image_bytes = provider.generate(
+                prompt=prompt,
+                style_suffix=style_suffix,
+                negative_prompt=negative_prompt,
+                cfg_scale=cfg_scale,
+                width=width,
+                height=height,
+                reference_images=reference_images,
+            )
+            if attempts:
+                logger.warning(
+                    "Image provider '%s' succeeded after %d prior failure(s): %s",
+                    provider.name, len(attempts),
+                    "; ".join(f"{n}: {e}" for n, e in attempts),
+                )
+            return image_bytes, provider.name
+        except Exception as e:  # noqa: BLE001 — any provider error is recoverable via fallback
+            summary = f"{type(e).__name__}: {str(e)[:160]}"
+            logger.warning("Image provider '%s' failed: %s", provider.name, summary)
+            attempts.append((provider.name, summary))
+
+    raise AllImageProvidersFailedError(attempts)

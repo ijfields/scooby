@@ -28,7 +28,7 @@ def generate_images_task(self, episode_id: str) -> dict:
     from app.models.scene import Scene
     from app.models.style_preset import StylePreset
     from app.models.video_asset import VideoAsset
-    from app.services.image.providers import get_image_provider
+    from app.services.image.providers import generate_image_with_fallback
 
     session = _get_sync_session()
     try:
@@ -51,8 +51,6 @@ def generate_images_task(self, episode_id: str) -> dict:
             if preset:
                 style_config = preset.config
 
-        image_provider = get_image_provider()
-
         # Anchor-frame locking: the first generated scene becomes the canonical
         # reference for every subsequent scene, so the recurring character and
         # art style stay consistent instead of drifting per-prompt. Providers
@@ -61,12 +59,14 @@ def generate_images_task(self, episode_id: str) -> dict:
 
         for i, scene in enumerate(scenes):
             logger.info(
-                "Generating image %d/%d for episode %s (provider: %s, anchor: %s)",
-                i + 1, len(scenes), episode_id, image_provider.name,
+                "Generating image %d/%d for episode %s (anchor: %s)",
+                i + 1, len(scenes), episode_id,
                 "yes" if anchor_frame else "no",
             )
             try:
-                image_bytes = image_provider.generate(
+                # Try the configured provider, then any configured fallbacks.
+                # `used_provider` is the one that actually produced the bytes.
+                image_bytes, used_provider = generate_image_with_fallback(
                     prompt=scene.visual_description,
                     style_suffix=style_config.get("style_prompt_suffix", ""),
                     negative_prompt=style_config.get("negative_prompt", ""),
@@ -82,7 +82,7 @@ def generate_images_task(self, episode_id: str) -> dict:
                     file_size_bytes=len(image_bytes),
                     mime_type="image/png",
                     metadata_={
-                        "provider": image_provider.name,
+                        "provider": used_provider,
                         "anchor_locked": anchor_frame is not None,
                     },
                 )

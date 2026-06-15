@@ -49,6 +49,8 @@ class TestConfigSettings:
             REDIS_URL="redis://localhost",
         )
         assert s.IMAGE_PROVIDER == "stability"
+        assert s.IMAGE_PROVIDER_FALLBACKS == ""
+        assert s.image_provider_fallbacks_list == []
         assert s.VIDEO_ANIMATION_PROVIDER == "none"
         assert s.GOOGLE_API_KEY == ""
         assert s.WAVESPEED_API_KEY == ""

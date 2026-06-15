@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.7] — 2026-06-15
+
+### [ADDED]
+
+**Image-provider fallback chain — one depleted provider can't break generation.** New `IMAGE_PROVIDER_FALLBACKS` setting (ordered, comma-separated) plus `generate_image_with_fallback()` in `providers.py`: the pipeline tries the configured `IMAGE_PROVIDER` first, then each fallback on any failure (429 / 5xx / quota), and records the provider that *actually* produced each frame in asset metadata. If every provider fails it raises `AllImageProvidersFailedError` carrying a per-provider error summary (for surfacing to the user). Verified live: direct `nanobanana2` (credit-depleted, 429) auto-recovers via both `stability` and `topview_nano_banana_2`.
+
+Local `.env` set to `IMAGE_PROVIDER=topview_nano_banana_2` with `IMAGE_PROVIDER_FALLBACKS=stability` (pay-per-image, no subscription — always-on backstop).
+
+### [FIXED]
+
+**Local image generation was silently failing.** Local `.env` still pinned `IMAGE_PROVIDER=nanobanana2` (direct Google AI Studio), whose prepay has been depleted since 2026-04-30 and still 429s as of today — so every local render failed at the image step, the pipeline aborted, and the previously-rendered MP4 kept being served (looked like "regeneration did nothing"). Switched local to the TopView-routed provider + Stability fallback.
+
+---
+
 ## [0.6.6] — 2026-06-15
 
 ### [ADDED]
