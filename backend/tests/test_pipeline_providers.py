@@ -7,6 +7,43 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
+class TestFriendlyError:
+    """Tests for translating pipeline exceptions into user-facing messages."""
+
+    def test_all_providers_failed_quota(self):
+        from app.services.image.providers import AllImageProvidersFailedError
+        from app.services.generation_errors import friendly_error as _friendly_error
+
+        e = AllImageProvidersFailedError(
+            [("nanobanana2", "ClientError: 429 RESOURCE_EXHAUSTED depleted"),
+             ("stability", "ClientError: 429 quota")]
+        )
+        msg = _friendly_error(e)
+        assert "out of credits" in msg
+        assert "nanobanana2" in msg and "stability" in msg
+
+    def test_all_providers_failed_generic(self):
+        from app.services.image.providers import AllImageProvidersFailedError
+        from app.services.generation_errors import friendly_error as _friendly_error
+
+        e = AllImageProvidersFailedError([("stability", "ValueError: bad key")])
+        msg = _friendly_error(e)
+        assert "failed on every configured provider" in msg
+        assert "stability" in msg
+
+    def test_bare_429_translated(self):
+        from app.services.generation_errors import friendly_error as _friendly_error
+
+        msg = _friendly_error(RuntimeError("HTTP 429 RESOURCE_EXHAUSTED"))
+        assert "rate-limited" in msg or "out of credits" in msg
+
+    def test_unknown_error_includes_detail(self):
+        from app.services.generation_errors import friendly_error as _friendly_error
+
+        msg = _friendly_error(RuntimeError("disk on fire"))
+        assert "disk on fire" in msg
+
+
 class TestPipelineImageProviderIntegration:
     """Tests that the pipeline correctly uses the provider registry."""
 

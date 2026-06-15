@@ -426,13 +426,18 @@ def run_full_pipeline_task(self, episode_id: str) -> dict:
             )
         ).scalar_one_or_none()
         if job_result:
+            from app.services.generation_errors import friendly_error
+
             job_result.status = "failed"
-            job_result.error_message = str(e)
+            job_result.error_message = friendly_error(e)
             job_result.completed_at = datetime.now(timezone.utc)
 
         ep = session.execute(select(Episode).where(Episode.id == episode_id)).scalar_one_or_none()
         if ep:
-            ep.status = "draft"
+            # If a prior run already produced a video, keep it viewable (preview
+            # still works) rather than dropping back to draft and hiding it; the
+            # failed job above is what signals the failure to the UI.
+            ep.status = "preview_ready" if ep.final_video_data else "draft"
 
         session.commit()
         raise

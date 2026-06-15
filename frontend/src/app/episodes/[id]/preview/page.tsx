@@ -43,6 +43,9 @@ export default function PreviewPage() {
   const [copied, setCopied] = useState(false);
   const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
   const [videoLoading, setVideoLoading] = useState(false);
+  // Set when the most recent generation attempt failed — so a stale video
+  // isn't shown as if it were a fresh, successful result.
+  const [failedGeneration, setFailedGeneration] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -53,6 +56,22 @@ export default function PreviewPage() {
           { token: token ?? undefined },
         );
         setEpisode(ep);
+
+        // Surface a failed last-generation so the previously-rendered video
+        // isn't silently shown as if the latest attempt succeeded.
+        try {
+          const lastJob = await apiFetch<{ status: string; error_message: string | null } | null>(
+            `/api/v1/episodes/${episodeId}/generate/status`,
+            { token: token ?? undefined },
+          );
+          if (lastJob?.status === "failed") {
+            setFailedGeneration(
+              lastJob.error_message || "The last generation attempt failed.",
+            );
+          }
+        } catch {
+          // Non-critical — banner just won't show
+        }
 
         // Fetch story for attribution
         try {
@@ -243,6 +262,26 @@ export default function PreviewPage() {
           </Button>
         </div>
       </div>
+
+      {/* Last generation attempt failed — warn that this is the previous render */}
+      {failedGeneration && (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+          <p className="font-semibold text-amber-800 dark:text-amber-300">
+            Your last generation attempt didn&apos;t finish
+          </p>
+          <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+            {failedGeneration} You&apos;re seeing the previous version below.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => router.push(`/episodes/${episodeId}/generate`)}
+          >
+            Try Generating Again
+          </Button>
+        </div>
+      )}
 
       {/* Attribution for YouTube-sourced episodes */}
       {story?.source_type === "youtube" && story.source_meta && (

@@ -14,6 +14,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 Local `.env` set to `IMAGE_PROVIDER=topview_nano_banana_2` with `IMAGE_PROVIDER_FALLBACKS=stability` (pay-per-image, no subscription — always-on backstop).
 
+**Generation failures are now surfaced, not swallowed.** Previously a failed regen reverted the episode to `draft` while the old MP4 kept being served, so "regeneration did nothing" looked like success. Now:
+- New `app/services/generation_errors.py::friendly_error()` translates raw provider errors (429/quota/`RESOURCE_EXHAUSTED`, `AllImageProvidersFailedError`) into plain-language guidance, stored on the failed job (the generate page already renders `error_message`).
+- A failed run no longer drops a previously-rendered episode back to `draft` — it stays `preview_ready` so the prior video is still viewable, with the failure carried by the job.
+- The preview page fetches the latest generation status and shows an amber "your last generation attempt didn't finish — you're seeing the previous version" banner with a retry button, instead of silently presenting the stale render.
+
 ### [FIXED]
 
 **Local image generation was silently failing.** Local `.env` still pinned `IMAGE_PROVIDER=nanobanana2` (direct Google AI Studio), whose prepay has been depleted since 2026-04-30 and still 429s as of today — so every local render failed at the image step, the pipeline aborted, and the previously-rendered MP4 kept being served (looked like "regeneration did nothing"). Switched local to the TopView-routed provider + Stability fallback.
