@@ -6,6 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.6] — 2026-06-15
+
+### [ADDED]
+
+**Anchor-frame locking — character + art-style consistency across scenes.** `generate_images_task` now captures the first successfully generated scene image as an `anchor_frame` and feeds it as a reference into every subsequent scene in the episode, so the recurring character, art style, color palette, and world stay consistent instead of drifting prompt-to-prompt. The image-provider interface (`ImageProvider.generate`) gained an optional `reference_images: list[bytes] | None` argument:
+- `nanobanana2` (Gemini 3.1 Flash) conditions on the reference natively — the frames are passed as image parts plus a "keep this canonical" instruction prepended to the prompt.
+- `stability`, `topview_*` accept the argument for interface parity and ignore it (their text2image paths can't condition on an input image).
+
+Assets generated with a locked anchor are tagged `anchor_locked: true` in their metadata for traceability.
+
+### [FIXED]
+
+**Stale unit tests repaired (11 tests, 4 files) — suite back to green.** Tests had drifted from earlier refactors and were failing on `master`:
+- `test_image_providers.py` / `test_animation_providers.py` / `test_pipeline_providers.py` — patched module-local `settings`, but `get_image_provider` / `get_animation_provider` now import `settings` lazily from `app.core.config`; repointed the patches.
+- `test_image_providers.py` — NB2 service now reads bytes off `image.image_bytes` (not `image.save()`); updated the mock.
+- `test_pipeline_providers.py` — config-default test was polluted by the repo `.env` (`IMAGE_PROVIDER=nanobanana2`); now instantiates `Settings(_env_file=None, …)` to assert true code defaults.
+- `test_youtube_import.py` — transcript service moved to `YouTubeTranscriptApi().fetch()` returning snippet objects; `series_planner.plan_series` was renamed `generate_series_plan` with a new signature and module-level client; `EpisodePlan`/`SeriesPlan` gained required fields (`key_content`, `hook_suggestion`, `series_thesis`, `total_episodes`). Tests realigned to the current contracts.
+
+(The 16 remaining `ConnectionRefusedError` results are DB-integration tests that require a local Postgres/Redis — unchanged, not run in unit mode.)
+
+---
+
 ## [0.6.5] — 2026-04-30
 
 ### [ADDED]

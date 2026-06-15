@@ -10,7 +10,7 @@ import pytest
 class TestPipelineImageProviderIntegration:
     """Tests that the pipeline correctly uses the provider registry."""
 
-    @patch("app.services.image.providers.settings")
+    @patch("app.core.config.settings")
     def test_pipeline_uses_configured_provider(self, mock_settings):
         """Verify the pipeline reads IMAGE_PROVIDER from settings."""
         mock_settings.IMAGE_PROVIDER = "stability"
@@ -23,7 +23,7 @@ class TestPipelineImageProviderIntegration:
         provider = get_image_provider()
         assert provider.name == "nanobanana2"
 
-    @patch("app.services.video.animation_providers.settings")
+    @patch("app.core.config.settings")
     def test_pipeline_skips_animation_when_none(self, mock_settings):
         """Storyboard mode should return None for animation provider."""
         mock_settings.VIDEO_ANIMATION_PROVIDER = "none"
@@ -39,8 +39,12 @@ class TestConfigSettings:
     def test_config_has_generation_provider_fields(self):
         from app.core.config import Settings
 
-        # Verify the fields exist with defaults
+        # Verify the fields exist with their declared defaults. _env_file=None
+        # disables .env loading so this asserts the code defaults, not whatever
+        # the local/CI environment happens to set (the repo .env pins
+        # IMAGE_PROVIDER=nanobanana2, which would otherwise fail this).
         s = Settings(
+            _env_file=None,
             DATABASE_URL="postgresql+asyncpg://x:x@localhost/x",
             REDIS_URL="redis://localhost",
         )

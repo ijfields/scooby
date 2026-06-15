@@ -37,13 +37,13 @@ class TestProviderRegistry:
         with pytest.raises(ValueError, match="Unknown image provider"):
             get_image_provider("nonexistent_model")
 
-    @patch("app.services.image.providers.settings")
+    @patch("app.core.config.settings")
     def test_get_provider_uses_config_default(self, mock_settings):
         mock_settings.IMAGE_PROVIDER = "nanobanana2"
         provider = get_image_provider()
         assert provider.name == "nanobanana2"
 
-    @patch("app.services.image.providers.settings")
+    @patch("app.core.config.settings")
     def test_explicit_name_overrides_config(self, mock_settings):
         mock_settings.IMAGE_PROVIDER = "nanobanana2"
         provider = get_image_provider("stability")
@@ -88,6 +88,25 @@ class TestNanoBanana2Provider:
         assert result == b"fake-nb2-png"
         mock_gen.assert_called_once()
 
+    @patch("app.services.image.nanobanana2.generate_image_nb2")
+    def test_generate_forwards_reference_images(self, mock_gen):
+        """Anchor-frame locking: the provider must forward reference frames."""
+        mock_gen.return_value = b"fake-nb2-png"
+        provider = NanoBanana2Provider()
+        provider.generate(prompt="scene 2", reference_images=[b"anchor-bytes"])
+        assert mock_gen.call_args.kwargs["reference_images"] == [b"anchor-bytes"]
+
+
+class TestStabilityIgnoresReference:
+    """Stability can't condition on a reference; it must accept and ignore it."""
+
+    @patch("app.services.image.generator.generate_image")
+    def test_reference_images_not_forwarded_to_stability(self, mock_gen):
+        mock_gen.return_value = b"png"
+        StabilityProvider().generate(prompt="x", reference_images=[b"ref"])
+        # generate_image has no reference param — it must not be passed through.
+        assert "reference_images" not in mock_gen.call_args.kwargs
+
 
 class TestNanoBanana2Service:
     """Tests for the Nanobanana 2 image generation service."""
@@ -97,9 +116,10 @@ class TestNanoBanana2Service:
     def test_generate_image_returns_png_bytes(self, mock_client_cls, mock_settings):
         mock_settings.GOOGLE_API_KEY = "test-key"
 
-        # Mock the Gemini response with an image part
+        # Mock the Gemini response with an image part. The service reads the
+        # raw bytes off image.image_bytes (not image.save()).
         mock_image = MagicMock()
-        mock_buf = MagicMock()
+        mock_image.image_bytes = b"PNG-DATA"
 
         mock_part = MagicMock()
         mock_part.inline_data = True
@@ -111,12 +131,6 @@ class TestNanoBanana2Service:
         mock_client = MagicMock()
         mock_client.models.generate_content.return_value = mock_response
         mock_client_cls.return_value = mock_client
-
-        # Mock image.save to write known bytes
-        def fake_save(buf, format=None):
-            buf.write(b"PNG-DATA")
-
-        mock_image.save.side_effect = fake_save
 
         from app.services.image.nanobanana2 import generate_image_nb2
 
@@ -174,3 +188,35 @@ class TestNanoBanana2Service:
         call_args = mock_client.models.generate_content.call_args
         prompt_sent = call_args.kwargs["contents"][0]
         assert "Avoid: blurry, low quality" in prompt_sent
+
+    @patch("app.services.image.nanobanana2.types.Part.from_bytes")
+    @patch("app.services.image.nanobanana2.settings")
+    @patch("app.services.image.nanobanana2.genai.Client")
+    def test_reference_images_added_to_contents(
+        self, mock_client_cls, mock_settings, mock_from_bytes
+    ):
+        """A supplied anchor frame is sent as an image part plus a
+        consistency instruction prepended to the prompt."""
+        mock_settings.GOOGLE_API_KEY = "test-key"
+        mock_from_bytes.return_value = "IMG_PART"
+
+        mock_part = MagicMock()
+        mock_part.inline_data = True
+        mock_part.as_image.return_value.image_bytes = b"x"
+
+        mock_response = MagicMock()
+        mock_response.parts = [mock_part]
+
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_client_cls.return_value = mock_client
+
+        from app.services.image.nanobanana2 import generate_image_nb2
+
+        generate_image_nb2(prompt="scene 2", reference_images=[b"anchor"])
+
+        mock_from_bytes.assert_called_once_with(data=b"anchor", mime_type="image/png")
+        contents = mock_client.models.generate_content.call_args.kwargs["contents"]
+        assert contents[0] == "IMG_PART"  # image part comes first
+        assert "canonical appearance" in contents[-1]  # consistency instruction
+        assert "scene 2" in contents[-1]

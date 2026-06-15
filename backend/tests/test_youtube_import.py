@@ -12,9 +12,11 @@ class TestYouTubeTranscriptService:
 
     @patch("app.services.youtube.transcript.YouTubeTranscriptApi")
     def test_fetch_transcript_returns_text(self, mock_api):
-        mock_api.get_transcript.return_value = [
-            {"text": "Hello world", "start": 0.0, "duration": 2.0},
-            {"text": "This is a test", "start": 2.0, "duration": 3.0},
+        # New API: YouTubeTranscriptApi() instance, .fetch() returns snippet
+        # objects exposing .text (not the old classmethod-returns-dicts shape).
+        mock_api.return_value.fetch.return_value = [
+            MagicMock(text="Hello world"),
+            MagicMock(text="This is a test"),
         ]
 
         from app.services.youtube.transcript import fetch_transcript
@@ -27,7 +29,7 @@ class TestYouTubeTranscriptService:
     def test_fetch_transcript_handles_no_transcript(self, mock_api):
         from youtube_transcript_api import NoTranscriptFound
 
-        mock_api.get_transcript.side_effect = NoTranscriptFound(
+        mock_api.return_value.fetch.side_effect = NoTranscriptFound(
             "dQw4w9WgXcQ", ["en"], []
         )
 
@@ -58,57 +60,70 @@ class TestYouTubeTranscriptService:
             extract_video_id("https://example.com/not-youtube")
 
 
+def _valid_plan_json(n_episodes: int = 3) -> str:
+    """Build a JSON series plan that satisfies the SeriesPlan schema —
+    total_episodes in [3, 8] and matching the episode count (see
+    series_planner._validate_and_parse)."""
+    import json
+
+    episodes = [
+        {
+            "episode_number": i + 1,
+            "title": f"Episode {i + 1}",
+            "angle": "An angle",
+            "key_content": "Condensed narrative content for the episode.",
+            "target_duration_sec": 75,
+            "hook_suggestion": "A compelling hook.",
+        }
+        for i in range(n_episodes)
+    ]
+    return json.dumps(
+        {
+            "series_title": "Test Series",
+            "series_thesis": "The overarching theme.",
+            "total_episodes": n_episodes,
+            "episodes": episodes,
+        }
+    )
+
+
 class TestSeriesPlanner:
     """Tests for the AI series planner."""
 
-    @patch("app.services.ai.series_planner.settings")
-    @patch("app.services.ai.series_planner.anthropic.Anthropic")
-    def test_plan_series_returns_episodes(self, mock_anthropic_cls, mock_settings):
-        mock_settings.ANTHROPIC_API_KEY = "test-key"
-
-        # Mock Claude response with a valid series plan JSON
+    @patch("app.services.ai.series_planner.client")
+    def test_generate_series_plan_returns_episodes(self, mock_client):
+        # The Anthropic client is constructed at module import, so patch the
+        # already-built `client`, not the anthropic.Anthropic class.
         mock_message = MagicMock()
-        mock_message.content = [
-            MagicMock(
-                text='{"series_title": "Test Series", "episodes": [{"episode_number": 1, "title": "Episode 1", "angle": "Introduction", "hook": "What if...", "scenes": []}]}'
-            )
-        ]
-
-        mock_client = MagicMock()
+        mock_message.content = [MagicMock(text=_valid_plan_json(3))]
         mock_client.messages.create.return_value = mock_message
-        mock_anthropic_cls.return_value = mock_client
 
-        from app.services.ai.series_planner import plan_series
+        from app.services.ai.series_planner import generate_series_plan
 
-        result = plan_series(
+        result = generate_series_plan(
             transcript="This is a test transcript about an interesting topic.",
-            source_title="Test Video",
-            source_channel="Test Channel",
+            video_title="Test Video",
+            channel="Test Channel",
+            duration_sec=600,
         )
 
         assert result is not None
-        assert "episodes" in result or hasattr(result, "episodes")
+        assert hasattr(result, "episodes")
+        assert len(result.episodes) == 3
 
-    @patch("app.services.ai.series_planner.settings")
-    @patch("app.services.ai.series_planner.anthropic.Anthropic")
-    def test_plan_series_sends_transcript_to_claude(self, mock_anthropic_cls, mock_settings):
-        mock_settings.ANTHROPIC_API_KEY = "test-key"
-
+    @patch("app.services.ai.series_planner.client")
+    def test_generate_series_plan_sends_transcript_to_claude(self, mock_client):
         mock_message = MagicMock()
-        mock_message.content = [
-            MagicMock(text='{"series_title": "X", "episodes": []}')
-        ]
-
-        mock_client = MagicMock()
+        mock_message.content = [MagicMock(text=_valid_plan_json(3))]
         mock_client.messages.create.return_value = mock_message
-        mock_anthropic_cls.return_value = mock_client
 
-        from app.services.ai.series_planner import plan_series
+        from app.services.ai.series_planner import generate_series_plan
 
-        plan_series(
+        generate_series_plan(
             transcript="The actual transcript content here.",
-            source_title="My Video",
-            source_channel="My Channel",
+            video_title="My Video",
+            channel="My Channel",
+            duration_sec=600,
         )
 
         # Verify Claude was called with the transcript in the prompt
@@ -128,7 +143,8 @@ class TestSeriesPlanSchemas:
             episode_number=1,
             title="The Beginning",
             angle="Origin story",
-            hook="It all started with...",
+            key_content="Condensed narrative content for the episode.",
+            hook_suggestion="It all started with...",
         )
         assert ep.episode_number == 1
         assert ep.title == "The Beginning"
@@ -138,12 +154,24 @@ class TestSeriesPlanSchemas:
 
         plan = SeriesPlan(
             series_title="My Series",
+            series_thesis="The overarching theme of the series.",
+            total_episodes=3,  # schema enforces 3-8 episodes
             episodes=[
-                EpisodePlan(episode_number=1, title="Ep1", angle="A1", hook="H1"),
-                EpisodePlan(episode_number=2, title="Ep2", angle="A2", hook="H2"),
+                EpisodePlan(
+                    episode_number=1, title="Ep1", angle="A1",
+                    key_content="C1", hook_suggestion="H1",
+                ),
+                EpisodePlan(
+                    episode_number=2, title="Ep2", angle="A2",
+                    key_content="C2", hook_suggestion="H2",
+                ),
+                EpisodePlan(
+                    episode_number=3, title="Ep3", angle="A3",
+                    key_content="C3", hook_suggestion="H3",
+                ),
             ],
         )
-        assert len(plan.episodes) == 2
+        assert len(plan.episodes) == 3
         assert plan.series_title == "My Series"
 
 

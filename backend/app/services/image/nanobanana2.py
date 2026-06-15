@@ -19,6 +19,7 @@ def generate_image_nb2(
     cfg_scale: int = 7,
     width: int = 768,
     height: int = 1344,
+    reference_images: list[bytes] | None = None,
 ) -> bytes:
     """Generate a single image via Nanobanana 2 (Gemini 3.1 Flash).
 
@@ -27,6 +28,11 @@ def generate_image_nb2(
     Note: Nanobanana 2 does not support explicit negative_prompt or cfg_scale
     parameters — these are accepted for interface compatibility with the
     Stability provider but are handled via prompt engineering instead.
+
+    ``reference_images`` (anchor-frame locking) are passed to Gemini as input
+    image parts so the model keeps the recurring character, art style, and
+    world consistent with earlier scenes. Gemini's multimodal input natively
+    supports this, so reference conditioning is functional for this provider.
     """
     full_prompt = f"{prompt}, {style_suffix}" if style_suffix else prompt
 
@@ -34,13 +40,30 @@ def generate_image_nb2(
     if negative_prompt:
         full_prompt += f". Avoid: {negative_prompt}"
 
+    # When reference frames are supplied, instruct the model to treat them as
+    # the canonical look and prepend them as image parts in the request.
+    contents: list = []
+    if reference_images:
+        for ref in reference_images:
+            contents.append(types.Part.from_bytes(data=ref, mime_type="image/png"))
+        full_prompt = (
+            "Use the reference image(s) as the canonical appearance for the "
+            "recurring character(s), art style, color palette, and world. "
+            "Keep that character and style strictly consistent while rendering "
+            f"this scene: {full_prompt}"
+        )
+    contents.append(full_prompt)
+
     client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
-    logger.info("Generating image via Nanobanana 2: %s", full_prompt[:100])
+    logger.info(
+        "Generating image via Nanobanana 2 (%d reference frame(s)): %s",
+        len(reference_images or []), full_prompt[:100],
+    )
 
     response = client.models.generate_content(
         model="gemini-3.1-flash-image-preview",
-        contents=[full_prompt],
+        contents=contents,
         config=types.GenerateContentConfig(
             response_modalities=["TEXT", "IMAGE"],
         ),

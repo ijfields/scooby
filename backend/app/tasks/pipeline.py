@@ -53,10 +53,17 @@ def generate_images_task(self, episode_id: str) -> dict:
 
         image_provider = get_image_provider()
 
+        # Anchor-frame locking: the first generated scene becomes the canonical
+        # reference for every subsequent scene, so the recurring character and
+        # art style stay consistent instead of drifting per-prompt. Providers
+        # that can't condition on a reference image ignore it (see providers.py).
+        anchor_frame: bytes | None = None
+
         for i, scene in enumerate(scenes):
             logger.info(
-                "Generating image %d/%d for episode %s (provider: %s)",
+                "Generating image %d/%d for episode %s (provider: %s, anchor: %s)",
                 i + 1, len(scenes), episode_id, image_provider.name,
+                "yes" if anchor_frame else "no",
             )
             try:
                 image_bytes = image_provider.generate(
@@ -64,6 +71,7 @@ def generate_images_task(self, episode_id: str) -> dict:
                     style_suffix=style_config.get("style_prompt_suffix", ""),
                     negative_prompt=style_config.get("negative_prompt", ""),
                     cfg_scale=style_config.get("cfg_scale", 7),
+                    reference_images=[anchor_frame] if anchor_frame else None,
                 )
 
                 # Store image bytes directly in database
@@ -73,9 +81,17 @@ def generate_images_task(self, episode_id: str) -> dict:
                     file_data=image_bytes,
                     file_size_bytes=len(image_bytes),
                     mime_type="image/png",
-                    metadata_={"provider": image_provider.name},
+                    metadata_={
+                        "provider": image_provider.name,
+                        "anchor_locked": anchor_frame is not None,
+                    },
                 )
                 session.add(asset)
+
+                # The first successfully generated frame locks the look for the
+                # rest of the episode.
+                if anchor_frame is None:
+                    anchor_frame = image_bytes
 
                 # Set image prompt on scene
                 scene.image_prompt = (
@@ -270,7 +286,7 @@ def generate_voiceovers_task(self, episode_id: str) -> dict:
 
 @celery_app.task(name="app.tasks.pipeline.compose_and_render", bind=True)
 def compose_and_render_task(self, episode_id: str) -> dict:
-    """Build composition JSON and render final video via Remotion."""
+    """Build composition JSON and render final video via the ffmpeg pipeline."""
     from app.models.episode import Episode
     from app.services.video.composer import build_composition_json
     from app.services.video.renderer import render_video

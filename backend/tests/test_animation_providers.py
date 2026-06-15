@@ -44,13 +44,13 @@ class TestAnimationProviderRegistry:
         with pytest.raises(ValueError, match="Unknown animation provider"):
             get_animation_provider("nonexistent_model")
 
-    @patch("app.services.video.animation_providers.settings")
+    @patch("app.core.config.settings")
     def test_get_provider_uses_config_default(self, mock_settings):
         mock_settings.VIDEO_ANIMATION_PROVIDER = "kling_pro"
         provider = get_animation_provider()
         assert provider.name == "kling_pro"
 
-    @patch("app.services.video.animation_providers.settings")
+    @patch("app.core.config.settings")
     def test_config_none_returns_none(self, mock_settings):
         mock_settings.VIDEO_ANIMATION_PROVIDER = "none"
         provider = get_animation_provider()

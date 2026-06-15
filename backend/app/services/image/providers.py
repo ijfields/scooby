@@ -29,8 +29,15 @@ class ImageProvider(Protocol):
         cfg_scale: int = 7,
         width: int = 768,
         height: int = 1344,
+        reference_images: list[bytes] | None = None,
     ) -> bytes:
-        """Generate an image from a text prompt. Returns raw PNG bytes."""
+        """Generate an image from a text prompt. Returns raw PNG bytes.
+
+        ``reference_images`` are optional canonical frames used to keep a
+        character / art style consistent across scenes (anchor-frame
+        locking). Providers that cannot condition on an input image accept
+        the argument and ignore it.
+        """
         ...
 
 
@@ -47,9 +54,12 @@ class StabilityProvider:
         cfg_scale: int = 7,
         width: int = 768,
         height: int = 1344,
+        reference_images: list[bytes] | None = None,
     ) -> bytes:
         from app.services.image.generator import generate_image
 
+        # Stability's text-to-image endpoint cannot condition on a reference
+        # image — reference_images is accepted for interface parity and ignored.
         return generate_image(
             prompt=prompt,
             style_suffix=style_suffix,
@@ -73,6 +83,7 @@ class NanoBanana2Provider:
         cfg_scale: int = 7,
         width: int = 768,
         height: int = 1344,
+        reference_images: list[bytes] | None = None,
     ) -> bytes:
         from app.services.image.nanobanana2 import generate_image_nb2
 
@@ -83,6 +94,7 @@ class NanoBanana2Provider:
             cfg_scale=cfg_scale,
             width=width,
             height=height,
+            reference_images=reference_images,
         )
 
 
@@ -103,9 +115,12 @@ class _TopViewProviderBase:
         cfg_scale: int = 7,
         width: int = 768,
         height: int = 1344,
+        reference_images: list[bytes] | None = None,
     ) -> bytes:
         from app.services.image.topview import generate_image_topview
 
+        # TopView's text2image submit path doesn't accept a reference image —
+        # reference_images is ignored until the image-edit endpoint is wired.
         return generate_image_topview(
             model_display_name=self.model_display_name,
             prompt=prompt,
