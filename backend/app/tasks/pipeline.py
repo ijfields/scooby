@@ -237,22 +237,38 @@ def regenerate_scene_image_task(self, scene_id: str, job_id: str) -> dict:
 
 @celery_app.task(name="app.tasks.pipeline.generate_animations", bind=True, max_retries=1)
 def generate_animations_task(self, episode_id: str) -> dict:
-    """Animate scene images into video clips (Movie Lite / Movie Pro tiers).
-
-    Skipped when VIDEO_ANIMATION_PROVIDER is "none" (Storyboard mode).
-    """
+    """Animate scene images into video clips. The provider is chosen by the
+    episode's generation_tier (see TIER_ANIMATION_MAP); standard/enhanced tiers
+    stay as silent storyboard. The global VIDEO_ANIMATION_PROVIDER can override
+    (auto | none | <provider>)."""
     from app.models.episode import Episode
     from app.models.scene import Scene
     from app.models.video_asset import VideoAsset
-    from app.services.video.animation_providers import get_animation_provider
-
-    provider = get_animation_provider()
-    if provider is None:
-        logger.info("Animation provider is 'none' — skipping for episode %s", episode_id)
-        return {"episode_id": episode_id, "animations_generated": 0, "skipped": True}
+    from app.services.video.animation_providers import resolve_animation_provider
 
     session = _get_sync_session()
     try:
+        episode = session.execute(
+            select(Episode).where(Episode.id == episode_id)
+        ).scalar_one()
+        tier = getattr(episode, "generation_tier", None) or "standard"
+
+        provider = resolve_animation_provider(tier)
+        if provider is None:
+            logger.info(
+                "No animation for episode %s (tier=%s) — storyboard mode",
+                episode_id, tier,
+            )
+            return {
+                "episode_id": episode_id, "animations_generated": 0,
+                "skipped": True, "tier": tier,
+            }
+
+        logger.info(
+            "Animating episode %s with provider %s (tier=%s)",
+            episode_id, provider.name, tier,
+        )
+
         scenes = list(
             session.execute(
                 select(Scene).where(Scene.episode_id == episode_id).order_by(Scene.scene_order)

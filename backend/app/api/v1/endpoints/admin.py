@@ -17,6 +17,7 @@ from app.services.billing import (
     get_vendor_balances,
 )
 from app.services.image.providers import IMAGE_PROVIDERS
+from app.services.video.animation_providers import TIER_ANIMATION_MAP
 
 router = APIRouter()
 
@@ -78,7 +79,8 @@ async def providers_overview(
         "active": {
             "image_provider": settings.IMAGE_PROVIDER,
             "image_fallbacks": settings.image_provider_fallbacks_list,
-            "animation_provider": settings.VIDEO_ANIMATION_PROVIDER,
+            "animation_mode": settings.VIDEO_ANIMATION_PROVIDER,
+            "tier_animation_map": TIER_ANIMATION_MAP,
         },
         "image_providers": image_providers,
         "animation_providers": animation_providers,

@@ -131,7 +131,7 @@ Same as backend except: no `ALLOWED_ORIGINS`, no `CLERK_ISSUER_URL`. Must includ
 - `ANTHROPIC_API_KEY`, `STABILITY_API_KEY`, `ELEVENLABS_API_KEY`
 - `SECRET_KEY`, `ENV=production`
 - `IMAGE_PROVIDER`, `IMAGE_PROVIDER_FALLBACKS` (so the worker pipeline uses the same providers)
-- `BACKEND_PUBLIC_URL` + `WAVESPEED_API_KEY` + `VIDEO_ANIMATION_PROVIDER` (only if using Kling video animation)
+- `BACKEND_PUBLIC_URL` + `WAVESPEED_API_KEY` for Kling video animation. `VIDEO_ANIMATION_PROVIDER` defaults to `auto` (animation provider chosen per episode by `generation_tier`: movie_lite→kling_std, movie/movie_pro→kling_pro; standard/enhanced→silent storyboard). Set `none` to disable animation globally, or `kling_std`/`kling_pro` to force one provider for every tier. Without `BACKEND_PUBLIC_URL` the worker hard-skips animation (storyboard) even for movie tiers.
 
 ### Frontend Variables
 

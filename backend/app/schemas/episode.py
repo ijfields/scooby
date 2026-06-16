@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
+
+GenerationTier = Literal["standard", "enhanced", "movie_lite", "movie", "movie_pro"]
 
 
 class EpisodeResponse(BaseModel):
@@ -12,6 +15,7 @@ class EpisodeResponse(BaseModel):
     title: str | None
     target_duration_sec: int
     status: str
+    generation_tier: str
     visual_style_id: UUID | None
     voice_style_id: UUID | None
     music_style_id: UUID | None
@@ -32,6 +36,8 @@ class EpisodeUpdate(BaseModel):
     visual_style_id: str | None = None
     voice_style_id: str | None = None
     music_style_id: str | None = None
+    # Drives which animation provider runs (see TIER_ANIMATION_MAP).
+    generation_tier: GenerationTier | None = None
 
 
 class SceneResponse(BaseModel):

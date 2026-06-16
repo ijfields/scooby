@@ -8,10 +8,55 @@ import pytest
 
 from app.services.video.animation_providers import (
     ANIMATION_PROVIDERS,
+    TIER_ANIMATION_MAP,
     KlingProProvider,
     KlingStdProvider,
     get_animation_provider,
+    resolve_animation_provider,
 )
+
+
+class TestTierAnimationResolution:
+    """generation_tier -> animation provider, with the global mode switch."""
+
+    @patch("app.core.config.settings")
+    def test_auto_maps_movie_lite_to_kling_std(self, mock_settings):
+        mock_settings.VIDEO_ANIMATION_PROVIDER = "auto"
+        provider = resolve_animation_provider("movie_lite")
+        assert provider is not None and provider.name == "kling_std"
+
+    @patch("app.core.config.settings")
+    def test_auto_maps_movie_pro_to_kling_pro(self, mock_settings):
+        mock_settings.VIDEO_ANIMATION_PROVIDER = "auto"
+        provider = resolve_animation_provider("movie_pro")
+        assert provider is not None and provider.name == "kling_pro"
+
+    @patch("app.core.config.settings")
+    def test_auto_standard_tier_is_storyboard(self, mock_settings):
+        mock_settings.VIDEO_ANIMATION_PROVIDER = "auto"
+        assert resolve_animation_provider("standard") is None
+
+    @patch("app.core.config.settings")
+    def test_unknown_tier_defaults_to_storyboard(self, mock_settings):
+        mock_settings.VIDEO_ANIMATION_PROVIDER = "auto"
+        assert resolve_animation_provider("nonsense") is None
+        assert resolve_animation_provider(None) is None
+
+    @patch("app.core.config.settings")
+    def test_none_mode_forces_storyboard_even_for_movie(self, mock_settings):
+        mock_settings.VIDEO_ANIMATION_PROVIDER = "none"
+        assert resolve_animation_provider("movie_pro") is None
+
+    @patch("app.core.config.settings")
+    def test_explicit_override_forces_provider_for_all_tiers(self, mock_settings):
+        mock_settings.VIDEO_ANIMATION_PROVIDER = "kling_std"
+        # Even a standard tier gets forced to kling_std when explicitly set.
+        provider = resolve_animation_provider("standard")
+        assert provider is not None and provider.name == "kling_std"
+
+    def test_tier_map_covers_known_tiers(self):
+        for tier in ("standard", "enhanced", "movie_lite", "movie", "movie_pro"):
+            assert tier in TIER_ANIMATION_MAP
 
 
 class TestAnimationProviderRegistry:

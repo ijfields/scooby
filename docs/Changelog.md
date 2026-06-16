@@ -6,6 +6,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 ---
 
+## [0.6.8] — 2026-06-16
+
+### [ADDED]
+
+**Tier-driven video animation.** The animation provider is now chosen per episode by `generation_tier` instead of a single global on/off switch. New `TIER_ANIMATION_MAP` + `resolve_animation_provider(tier)` in `animation_providers.py`:
+- `standard` / `enhanced` → silent storyboard (no per-clip cost)
+- `movie_lite` → `kling_std` (~$0.42/5s clip)
+- `movie` / `movie_pro` → `kling_pro` (~$0.56/5s clip)
+
+`VIDEO_ANIMATION_PROVIDER` became a mode switch — `auto` (default; use the tier map), `none` (force storyboard everywhere), or an explicit `kling_std`/`kling_pro` (force one provider for all tiers, for testing). `generation_tier` is now settable via `PATCH /episodes/{id}` (validated `Literal`) and returned on `EpisodeResponse`, so an episode can actually be placed on a movie tier. The `/admin/providers` page shows the active mode and, in `auto`, the full tier→provider mapping.
+
+Verified live (2026-06-15): real Kling 3.0 generation via WaveSpeed returned a 4.5 MB MP4 — full submit→poll→download path works once a directly-fetchable image URL is provided.
+
+---
+
 ## [0.6.7] — 2026-06-15
 
 ### [ADDED]

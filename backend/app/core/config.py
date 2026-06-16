@@ -44,7 +44,11 @@ class Settings(BaseSettings):
     # /quota). Empty = no fallback. The primary is always tried first and is
     # de-duplicated out of the chain. Example: "topview_imagen_4,stability".
     IMAGE_PROVIDER_FALLBACKS: str = ""
-    VIDEO_ANIMATION_PROVIDER: str = "none"  # none | kling_std | kling_pro
+    # Animation mode switch:
+    #   auto  -> per-episode by generation_tier (see TIER_ANIMATION_MAP) [default]
+    #   none  -> never animate (global storyboard)
+    #   kling_std | kling_pro -> force that provider for every tier
+    VIDEO_ANIMATION_PROVIDER: str = "auto"
 
     @property
     def image_provider_fallbacks_list(self) -> list[str]:

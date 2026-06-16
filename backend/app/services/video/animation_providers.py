@@ -79,17 +79,30 @@ ANIMATION_PROVIDERS: dict[str, AnimationProvider] = {
     "kling_pro": KlingProProvider(),
 }
 
+# Per-tier animation provider. None = silent storyboard (Ken Burns, no per-clip
+# cost). Adjust the kling_std/kling_pro split here to retune cost vs quality.
+#   standard / enhanced -> storyboard (free of per-clip charges)
+#   movie_lite          -> Kling Standard (~$0.42 / 5s clip)
+#   movie / movie_pro   -> Kling Pro      (~$0.56 / 5s clip)
+TIER_ANIMATION_MAP: dict[str, str | None] = {
+    "standard": None,
+    "enhanced": None,
+    "movie_lite": "kling_std",
+    "movie": "kling_pro",
+    "movie_pro": "kling_pro",
+}
+
 
 def get_animation_provider(name: str | None = None) -> AnimationProvider | None:
     """Get animation provider by name, or fall back to configured default.
 
-    Returns None if provider is "none" (Storyboard mode — no animation).
+    Returns None if provider is "none"/"auto" with no concrete name.
     """
     from app.core.config import settings
 
     provider_name = name or settings.VIDEO_ANIMATION_PROVIDER
 
-    if provider_name == "none":
+    if provider_name in ("none", "auto"):
         return None
 
     if provider_name not in ANIMATION_PROVIDERS:
@@ -101,3 +114,28 @@ def get_animation_provider(name: str | None = None) -> AnimationProvider | None:
     provider = ANIMATION_PROVIDERS[provider_name]
     logger.debug("Using animation provider: %s", provider.name)
     return provider
+
+
+def resolve_animation_provider(generation_tier: str | None) -> AnimationProvider | None:
+    """Pick the animation provider for an episode based on its generation tier.
+
+    The global `VIDEO_ANIMATION_PROVIDER` acts as a mode switch:
+      - "auto"  -> use TIER_ANIMATION_MAP[generation_tier]   (default)
+      - "none"  -> never animate (global storyboard override)
+      - "<name>"-> force that provider for every tier (testing / override)
+    Returns the provider instance, or None for storyboard mode.
+    """
+    from app.core.config import settings
+
+    mode = (settings.VIDEO_ANIMATION_PROVIDER or "auto").strip()
+
+    if mode == "none":
+        return None
+    if mode == "auto":
+        provider_name = TIER_ANIMATION_MAP.get(generation_tier or "standard")
+        if not provider_name:
+            return None
+        return get_animation_provider(provider_name)
+
+    # Explicit global override (e.g. VIDEO_ANIMATION_PROVIDER=kling_std)
+    return get_animation_provider(mode)

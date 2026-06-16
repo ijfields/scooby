@@ -26,7 +26,8 @@ interface Overview {
   active: {
     image_provider: string;
     image_fallbacks: string[];
-    animation_provider: string;
+    animation_mode: string;
+    tier_animation_map: Record<string, string | null>;
   };
   image_providers: ProviderRow[];
   animation_providers: ProviderRow[];
@@ -178,10 +179,19 @@ export default function AdminProvidersPage() {
             </span>
           </span>
           <span>
-            <span className="text-muted-foreground">Active animation: </span>
-            <span className="font-medium">{data.active.animation_provider}</span>
+            <span className="text-muted-foreground">Animation mode: </span>
+            <span className="font-medium">{data.active.animation_mode}</span>
           </span>
         </div>
+        {data.active.animation_mode === "auto" && (
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {Object.entries(data.active.tier_animation_map).map(([tier, prov]) => (
+              <span key={tier}>
+                {tier} → <span className="font-medium text-foreground">{prov ?? "storyboard"}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <h2 className="mt-8 mb-3 text-lg font-semibold">Image providers</h2>
@@ -194,8 +204,27 @@ export default function AdminProvidersPage() {
       <h2 className="mt-8 mb-3 text-lg font-semibold">Animation providers</h2>
       <ProviderTable
         rows={data.animation_providers}
-        activeName={data.active.animation_provider}
+        activeName={
+          data.active.animation_mode === "auto" ||
+          data.active.animation_mode === "none"
+            ? ""
+            : data.active.animation_mode
+        }
+        fallbacks={
+          data.active.animation_mode === "auto"
+            ? Object.values(data.active.tier_animation_map).filter(
+                (v): v is string => !!v,
+              )
+            : []
+        }
       />
+      {data.active.animation_mode === "auto" && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          In <strong>auto</strong> mode, the provider is chosen per episode by tier
+          (see mapping above); &ldquo;FALLBACK&rdquo; here marks providers that some
+          tier uses.
+        </p>
+      )}
     </div>
   );
 }

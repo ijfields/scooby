@@ -7,6 +7,23 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
+class TestEpisodeTierSchema:
+    """generation_tier must be settable via EpisodeUpdate, with validation."""
+
+    def test_valid_tier_accepted(self):
+        from app.schemas.episode import EpisodeUpdate
+
+        assert EpisodeUpdate(generation_tier="movie_pro").generation_tier == "movie_pro"
+
+    def test_invalid_tier_rejected(self):
+        import pydantic
+
+        from app.schemas.episode import EpisodeUpdate
+
+        with pytest.raises(pydantic.ValidationError):
+            EpisodeUpdate(generation_tier="ultra_max")
+
+
 class TestFriendlyError:
     """Tests for translating pipeline exceptions into user-facing messages."""
 
@@ -88,7 +105,7 @@ class TestConfigSettings:
         assert s.IMAGE_PROVIDER == "stability"
         assert s.IMAGE_PROVIDER_FALLBACKS == ""
         assert s.image_provider_fallbacks_list == []
-        assert s.VIDEO_ANIMATION_PROVIDER == "none"
+        assert s.VIDEO_ANIMATION_PROVIDER == "auto"
         assert s.GOOGLE_API_KEY == ""
         assert s.WAVESPEED_API_KEY == ""
 
