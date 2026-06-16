@@ -20,7 +20,30 @@ interface Episode {
   voice_style_id: string | null;
   music_style_id: string | null;
   target_duration_sec: number;
+  generation_tier: string;
 }
+
+// Three distinct video-quality tiers (map to the backend's animation tiers).
+const QUALITY_TIERS = [
+  {
+    value: "standard",
+    label: "Storyboard",
+    desc: "Still images with gentle motion (Ken Burns). Fastest and cheapest.",
+    cost: "~$0.40 / episode",
+  },
+  {
+    value: "movie_lite",
+    label: "Movie Lite",
+    desc: "Every scene animated into video (Kling Standard).",
+    cost: "~$2.50–3.40 / episode",
+  },
+  {
+    value: "movie_pro",
+    label: "Movie Pro",
+    desc: "Every scene animated in premium quality (Kling Pro).",
+    cost: "~$3.40–4.50 / episode",
+  },
+] as const;
 
 export default function StyleSelectionPage() {
   const { id: episodeId } = useParams<{ id: string }>();
@@ -33,6 +56,7 @@ export default function StyleSelectionPage() {
   const [voiceId, setVoiceId] = useState<string | null>(null);
   const [musicId, setMusicId] = useState<string | null>(null);
   const [duration, setDuration] = useState<60 | 90>(90);
+  const [tier, setTier] = useState<string>("standard");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -54,6 +78,7 @@ export default function StyleSelectionPage() {
         setVoiceId(ep.voice_style_id);
         setMusicId(ep.music_style_id);
         setDuration(ep.target_duration_sec === 60 ? 60 : 90);
+        setTier(ep.generation_tier || "standard");
       } catch {
         router.push("/stories");
       } finally {
@@ -79,6 +104,7 @@ export default function StyleSelectionPage() {
           voice_style_id: voiceId,
           music_style_id: musicId,
           target_duration_sec: duration,
+          generation_tier: tier,
         }),
       });
       router.push(`/episodes/${episodeId}/generate`);
@@ -117,6 +143,32 @@ export default function StyleSelectionPage() {
               }`}
             >
               {d} seconds
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Video Quality / Tier */}
+      <div className="mt-8">
+        <h2 className="font-semibold">Video Quality</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Storyboard uses still images with motion. Movie tiers animate every
+          scene into real video — higher quality, higher cost.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {QUALITY_TIERS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setTier(t.value)}
+              className={`rounded-xl border p-4 text-left transition-all ${
+                tier === t.value
+                  ? "border-primary ring-2 ring-primary/30"
+                  : "border-border hover:border-primary/50"
+              }`}
+            >
+              <p className="font-medium">{t.label}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t.desc}</p>
+              <p className="mt-2 text-xs font-medium text-foreground">{t.cost}</p>
             </button>
           ))}
         </div>

@@ -17,6 +17,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Tags: `[ADDED]`,
 
 `VIDEO_ANIMATION_PROVIDER` became a mode switch — `auto` (default; use the tier map), `none` (force storyboard everywhere), or an explicit `kling_std`/`kling_pro` (force one provider for all tiers, for testing). `generation_tier` is now settable via `PATCH /episodes/{id}` (validated `Literal`) and returned on `EpisodeResponse`, so an episode can actually be placed on a movie tier. The `/admin/providers` page shows the active mode and, in `auto`, the full tier→provider mapping.
 
+**Video Quality picker** on the Choose-Style page — three tiers (Storyboard / Movie Lite / Movie Pro) with per-tier cost shown, saved to `generation_tier` alongside the other style choices. Closes the loop so writers can self-select Movie tiers without an API call.
+
 Verified live (2026-06-15): real Kling 3.0 generation via WaveSpeed returned a 4.5 MB MP4 — full submit→poll→download path works once a directly-fetchable image URL is provided.
 
 ---
