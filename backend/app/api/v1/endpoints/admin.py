@@ -24,11 +24,19 @@ router = APIRouter()
 
 async def require_admin(user: User = Depends(get_current_user)) -> User:
     """Allow only emails listed in ADMIN_EMAILS. Empty list = locked down."""
-    if user.email.lower() not in settings.admin_emails_list:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
+    allow = settings.admin_emails_list
+    if user.email.lower() not in allow:
+        if not allow:
+            detail = (
+                f"Admin access required. ADMIN_EMAILS is not set on the backend. "
+                f"Add ADMIN_EMAILS={user.email} to the backend service and redeploy."
+            )
+        else:
+            detail = (
+                f"Admin access required. Your account email is '{user.email}', which "
+                f"is not in the allow-list. Add it to ADMIN_EMAILS on the backend."
+            )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
     return user
 
 
